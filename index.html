@@ -17,6 +17,7 @@ input,select,textarea,button{font-family:inherit}
 ::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:4px}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
 .fu{animation:fadeUp .35s ease both}
 .spin{animation:spin 1s linear infinite;display:inline-block}
 </style>
@@ -24,73 +25,29 @@ input,select,textarea,button{font-family:inherit}
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useCallback } = React;
+const { useState } = React;
 
 const ADMIN_CREDENTIALS = [{ username: "korvil_admin", password: "korviladmin_pass", name: "Admin" }];
 const DEFAULT_OFFICE = { lat: 12.9716, lng: 77.5946 };
 const DEFAULT_RADIUS = 200;
 
-// ── Haversine distance (metres) ──────────────────────────────────────────────
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371000;
-  const toRad = x => (x * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function getTodayKey() { return new Date().toISOString().split("T")[0]; }
-function formatDate(d) {
-  return new Date(d).toLocaleDateString("en-IN", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric"
-  });
-}
+function formatDate(d) { return new Date(d).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); }
 function getMonthDays(y, m) { return new Date(y, m + 1, 0).getDate(); }
-
 function loadStore() {
-  try {
-    const s = localStorage.getItem("korvil_v3");
-    if (s) return JSON.parse(s);
-  } catch {}
-  return {
-    employees: [],
-    attendance: {},
-    messages: [],
-    officeLocation: DEFAULT_OFFICE,
-    officeRadius: DEFAULT_RADIUS
-  };
+  try { const s = localStorage.getItem("korvil_v3"); if (s) return JSON.parse(s); } catch {}
+  return { employees: [], attendance: {}, messages: [], officeLocation: DEFAULT_OFFICE, officeRadius: DEFAULT_RADIUS };
 }
 function saveStore(s) { localStorage.setItem("korvil_v3", JSON.stringify(s)); }
 
-// ── Geolocation helper — always requests fresh HIGH-ACCURACY fix ─────────────
-function getCurrentPosition() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("Geolocation is not supported by this browser."));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
-      err => {
-        let msg = "Unable to get location.";
-        if (err.code === 1) msg = "Location permission denied. Please allow location access and try again.";
-        else if (err.code === 2) msg = "Location unavailable. Please check your GPS/network.";
-        else if (err.code === 3) msg = "Location request timed out. Please try again.";
-        reject(new Error(msg));
-      },
-      {
-        enableHighAccuracy: true,  // ← force GPS, not IP/WiFi
-        timeout: 15000,
-        maximumAge: 0              // ← never use cached position
-      }
-    );
-  });
-}
-
-// ── UI primitives ─────────────────────────────────────────────────────────────
 function Logo({ size = 32 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
@@ -115,37 +72,16 @@ function EyeIcon({ open }) {
   );
 }
 
-function Field({ label, value, onChange, type = "text", placeholder, right, readOnly }) {
+function Field({ label, value, onChange, type = "text", placeholder, right }) {
   return (
     <div>
-      {label && (
-        <label style={{ display: "block", fontSize: 10, color: "#4A90D9", letterSpacing: 1, marginBottom: 5, fontFamily: "'DM Mono',monospace" }}>
-          {label}
-        </label>
-      )}
+      {label && <label style={{ display: "block", fontSize: 10, color: "#4A90D9", letterSpacing: 1, marginBottom: 5, fontFamily: "'DM Mono',monospace" }}>{label}</label>}
       <div style={{ position: "relative" }}>
-        <input
-          value={value}
-          onChange={onChange}
-          type={type}
-          placeholder={placeholder}
-          readOnly={readOnly}
-          style={{
-            width: "100%",
-            background: readOnly ? "#0a1220" : "#070d1a",
-            border: "1px solid #1e3a5f",
-            borderRadius: 9,
-            padding: right ? "11px 44px 11px 14px" : "11px 14px",
-            color: readOnly ? "#64748B" : "#E2E8F0",
-            fontSize: 14,
-            outline: "none"
-          }}
-          onFocus={e => { if (!readOnly) e.target.style.borderColor = "#00d4ff"; }}
-          onBlur={e => e.target.style.borderColor = "#1e3a5f"}
-        />
-        {right && (
-          <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}>{right}</div>
-        )}
+        <input value={value} onChange={onChange} type={type} placeholder={placeholder}
+          style={{ width: "100%", background: "#070d1a", border: "1px solid #1e3a5f", borderRadius: 9, padding: right ? "11px 44px 11px 14px" : "11px 14px", color: "#E2E8F0", fontSize: 14, outline: "none" }}
+          onFocus={e => e.target.style.borderColor = "#00d4ff"}
+          onBlur={e => e.target.style.borderColor = "#1e3a5f"} />
+        {right && <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}>{right}</div>}
       </div>
     </div>
   );
@@ -163,12 +99,10 @@ function Shell({ user, onLogout, nav, active, setActive, children }) {
           <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#00d4ff18", border: "1px solid #00d4ff33", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#00d4ff", flexShrink: 0 }}>{initials}</div>
           <div style={{ overflow: "hidden" }}>
             <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</div>
-            <div style={{ fontSize: 10, color: "#4A90D9", fontFamily: "'DM Mono',monospace" }}>
-              {user.role === "admin" ? "ADMIN" : (user.emp?.department || "EMPLOYEE").toUpperCase()}
-            </div>
+            <div style={{ fontSize: 10, color: "#4A90D9", fontFamily: "'DM Mono',monospace" }}>{user.role === "admin" ? "ADMIN" : (user.emp?.department || "EMPLOYEE").toUpperCase()}</div>
           </div>
         </div>
-        <nav style={{ flex: 1, padding: "10px 8px", overflowY: "auto" }}>
+        <nav style={{ flex: 1, padding: "10px 8px" }}>
           {nav.map(n => {
             const on = active === n.id;
             return (
@@ -176,9 +110,7 @@ function Shell({ user, onLogout, nav, active, setActive, children }) {
                 style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "10px 12px", borderRadius: 8, border: "none", cursor: "pointer", marginBottom: 3, background: on ? "#00d4ff10" : "transparent", color: on ? "#00d4ff" : "#64748B", fontSize: 13, fontWeight: on ? 600 : 400, textAlign: "left", position: "relative" }}>
                 <span style={{ fontSize: 15 }}>{n.icon}</span>
                 <span style={{ flex: 1 }}>{n.label}</span>
-                {n.badge > 0 && (
-                  <span style={{ background: "#00d4ff", color: "#050911", fontSize: 10, fontWeight: 700, borderRadius: 99, padding: "1px 6px", fontFamily: "'DM Mono',monospace" }}>{n.badge}</span>
-                )}
+                {n.badge > 0 && <span style={{ background: "#00d4ff", color: "#050911", fontSize: 10, fontWeight: 700, borderRadius: 99, padding: "1px 6px", fontFamily: "'DM Mono',monospace" }}>{n.badge}</span>}
                 {on && <div style={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, borderRadius: 99, background: "#00d4ff" }}/>}
               </button>
             );
@@ -205,13 +137,8 @@ function Title({ text, sub }) {
   );
 }
 
-const sel = {
-  background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 8,
-  padding: "9px 12px", color: "#E2E8F0", fontSize: 13, outline: "none",
-  cursor: "pointer", fontFamily: "inherit"
-};
+const sel = { background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 8, padding: "9px 12px", color: "#E2E8F0", fontSize: 13, outline: "none", cursor: "pointer", fontFamily: "inherit" };
 
-// ── Login ─────────────────────────────────────────────────────────────────────
 function Login({ onLogin }) {
   const [tab, setTab] = useState("admin");
   const [user, setUser] = useState("");
@@ -271,7 +198,6 @@ function Login({ onLogin }) {
   );
 }
 
-// ── Admin Dashboard ───────────────────────────────────────────────────────────
 function AdminDash({ user, onLogout }) {
   const [view, setView] = useState("dash");
   const [store, setStore] = useState(loadStore());
@@ -324,14 +250,10 @@ function AdminOverview({ store }) {
         <div style={{ padding: "15px 20px", borderBottom: "1px solid #0f2040", fontSize: 13, fontWeight: 700 }}>Today's Attendance</div>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr style={{ borderBottom: "1px solid #0f2040" }}>
-            {["Name","Department","Status","Time"].map(h => (
-              <th key={h} style={{ padding: "11px 20px", textAlign: "left", fontSize: 10, color: "#4A90D9", letterSpacing: 1, fontFamily: "'DM Mono',monospace" }}>{h}</th>
-            ))}
+            {["Name","Department","Status","Time"].map(h => <th key={h} style={{ padding: "11px 20px", textAlign: "left", fontSize: 10, color: "#4A90D9", letterSpacing: 1, fontFamily: "'DM Mono',monospace" }}>{h}</th>)}
           </tr></thead>
           <tbody>
-            {store.employees.length === 0 && (
-              <tr><td colSpan={4} style={{ padding: "30px", textAlign: "center", color: "#1e3a5f", fontSize: 13 }}>No employees yet.</td></tr>
-            )}
+            {store.employees.length === 0 && <tr><td colSpan={4} style={{ padding: "30px", textAlign: "center", color: "#1e3a5f", fontSize: 13 }}>No employees yet.</td></tr>}
             {store.employees.map((e, i) => {
               const rec = store.attendance[e.username]?.[today];
               return (
@@ -354,31 +276,52 @@ function AdminOverview({ store }) {
   );
 }
 
-// ── Employee Manager (with edit credentials) ──────────────────────────────────
 function EmpManager({ store, refresh }) {
   const [form, setForm] = useState({ name: "", department: "", year: "", username: "", password: "" });
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
   const [del, setDel] = useState(null);
-  const [editTarget, setEditTarget] = useState(null); // employee username being edited
-  const [editForm, setEditForm] = useState({ name: "", department: "", year: "", username: "", password: "" });
-  const [editErr, setEditErr] = useState("");
-  const [editOk, setEditOk] = useState("");
-  const [showEditPass, setShowEditPass] = useState(false);
-  const [showAddPass, setShowAddPass] = useState(false);
 
   function add() {
     setErr(""); setOk("");
-    if (Object.values(form).some(v => !v.trim())) return setErr("All fields are required.");
+    if (Object.values(form).some(v => !v)) return setErr("All fields are required.");
     if (store.employees.length >= 50) return setErr("Max 50 employees.");
-    if (store.employees.find(e => e.username === form.username.trim())) return setErr("Username already exists.");
-    const s = loadStore();
-    s.employees.push({ name: form.name.trim(), department: form.department.trim(), year: form.year.trim(), username: form.username.trim(), password: form.password });
-    saveStore(s);
-    setOk(`"${form.name}" added!`);
-    setForm({ name: "", department: "", year: "", username: "", password: "" });
-    refresh();
+    if (store.employees.find(e => e.username === form.username)) return setErr("Username already exists.");
+    const s = loadStore(); s.employees.push({ ...form }); saveStore(s);
+    setOk(`"${form.name}" added!`); setForm({ name: "", department: "", year: "", username: "", password: "" }); refresh();
     setTimeout(() => setOk(""), 3000);
   }
 
-  
+  function remove() {
+    const s = loadStore();
+    s.employees = s.employees.filter(e => e.username !== del);
+    delete s.attendance[del];
+    saveStore(s); setDel(null); refresh();
+  }
+
+  return (
+    <div className="fu">
+      <Title text="Manage Employees" sub={`${store.employees.length}/50`}/>
+      {del && (
+        <div style={{ position: "fixed", inset: 0, background: "#000b", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#0d1421", border: "1px solid #7f1d1d", borderRadius: 14, padding: "28px 32px", maxWidth: 340, width: "90%", textAlign: "center" }}>
+            <div style={{ fontSize: 28, marginBottom: 10 }}>&#9888;</div>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>Remove Employee?</div>
+            <div style={{ fontSize: 13, color: "#64748B", marginBottom: 22 }}>
+              This will permanently delete <strong style={{ color: "#E2E8F0" }}>{store.employees.find(e => e.username === del)?.name}</strong> and all their records.
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setDel(null)} style={{ flex: 1, padding: "10px", border: "1px solid #1e3a5f", borderRadius: 7, background: "transparent", color: "#94A3B8", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={remove} style={{ flex: 1, padding: "10px", border: "none", borderRadius: 7, background: "#7f1d1d", color: "#FCA5A5", cursor: "pointer", fontFamily: "inherit", fontWeight: 700 }}>Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, padding: "22px 20px", marginBottom: 24 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#00d4ff", marginBottom: 16, letterSpacing: 1 }}>ADD EMPLOYEE</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 10, marginBottom: 14 }}>
+          {[["name","Full Name"],["department","Department"],["year","Year / Batch"],["username","Username"],["password","Password"]].map(([k,p]) => (
+            <Field key={k} label={p.toUpperCase()} value={form[k]} onChange={e => setForm(x => ({ ...x, [k]: e.target.value }))} type={k === "password" ? "password" : "text"} placeholder={p}/>
+          ))}
+        </div>
+        {err && <div style={{ background: "#1a0a0a", border: "1px solid #7f1d1d",

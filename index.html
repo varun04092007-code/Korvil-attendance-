@@ -1,4 +1,31 @@
-import { useState } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Korvil Attendance</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#050911;color:#E2E8F0;font-family:'Syne',sans-serif}
+input,select,textarea,button{font-family:inherit}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#0d1421}
+::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:4px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.fu{animation:fadeUp .35s ease both}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
 
 const ADMIN_CREDENTIALS = [{ username: "korvil_admin", password: "korviladmin_pass", name: "Admin" }];
 const DEFAULT_OFFICE = { lat: 12.9716, lng: 77.5946 };
@@ -16,40 +43,10 @@ function getTodayKey() { return new Date().toISOString().split("T")[0]; }
 function formatDate(d) { return new Date(d).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); }
 function getMonthDays(y, m) { return new Date(y, m + 1, 0).getDate(); }
 function loadStore() {
-  try { const s = localStorage.getItem("korvil_v4"); if (s) return JSON.parse(s); } catch {}
+  try { const s = localStorage.getItem("korvil_v3"); if (s) return JSON.parse(s); } catch {}
   return { employees: [], attendance: {}, messages: [], officeLocation: DEFAULT_OFFICE, officeRadius: DEFAULT_RADIUS };
 }
-function saveStore(s) { localStorage.setItem("korvil_v4", JSON.stringify(s)); }
-
-// Fresh GPS — no IP fallback (IP geolocation is city-level and wildly inaccurate)
-function getFreshGPS() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) { reject({ code: "NO_API", msg: "Your browser does not support location. Try Chrome or Firefox." }); return; }
-    navigator.geolocation.getCurrentPosition(
-      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy }),
-      err => {
-        if (err.code === 1) reject({ code: "DENIED", msg: "Location permission denied. Open your browser settings, allow location for this site, then try again." });
-        else if (err.code === 2) reject({ code: "UNAVAIL", msg: "GPS signal unavailable. Move to an open area or enable Wi-Fi location and try again." });
-        else reject({ code: "TIMEOUT", msg: "Location timed out. Make sure GPS is on and try again." });
-      },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-    );
-  });
-}
-
-const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body{background:#050911;color:#E2E8F0;font-family:'Syne',sans-serif}
-  input,select,textarea,button{font-family:inherit}
-  ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#0d1421}::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:4px}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-  .fu{animation:fadeUp .35s ease both}
-  .spin{animation:spin 1s linear infinite;display:inline-block}
-  .blink{animation:blink 1.4s infinite}
-`;
+function saveStore(s) { localStorage.setItem("korvil_v3", JSON.stringify(s)); }
 
 function Logo({ size = 32 }) {
   return (
@@ -75,15 +72,15 @@ function EyeIcon({ open }) {
   );
 }
 
-function Field({ label, value, onChange, type = "text", placeholder, right, readOnly }) {
+function Field({ label, value, onChange, type = "text", placeholder, right }) {
   return (
     <div>
       {label && <label style={{ display: "block", fontSize: 10, color: "#4A90D9", letterSpacing: 1, marginBottom: 5, fontFamily: "'DM Mono',monospace" }}>{label}</label>}
       <div style={{ position: "relative" }}>
-        <input value={value} onChange={onChange} type={type} placeholder={placeholder} readOnly={readOnly}
-          style={{ width: "100%", background: readOnly ? "#060b17" : "#070d1a", border: "1px solid #1e3a5f", borderRadius: 9, padding: right ? "11px 44px 11px 14px" : "11px 14px", color: readOnly ? "#4A90D9" : "#E2E8F0", fontSize: 14, outline: "none" }}
-          onFocus={e => !readOnly && (e.target.style.borderColor = "#00d4ff")}
-          onBlur={e => (e.target.style.borderColor = "#1e3a5f")} />
+        <input value={value} onChange={onChange} type={type} placeholder={placeholder}
+          style={{ width: "100%", background: "#070d1a", border: "1px solid #1e3a5f", borderRadius: 9, padding: right ? "11px 44px 11px 14px" : "11px 14px", color: "#E2E8F0", fontSize: 14, outline: "none" }}
+          onFocus={e => e.target.style.borderColor = "#00d4ff"}
+          onBlur={e => e.target.style.borderColor = "#1e3a5f"} />
         {right && <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}>{right}</div>}
       </div>
     </div>
@@ -142,19 +139,6 @@ function Title({ text, sub }) {
 
 const sel = { background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 8, padding: "9px 12px", color: "#E2E8F0", fontSize: 13, outline: "none", cursor: "pointer", fontFamily: "inherit" };
 
-// ─── MODAL ────────────────────────────────────────────────────────────────────
-function Modal({ title, onClose, children }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "#000c", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div className="fu" style={{ background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 14, padding: "28px 28px", width: "90%", maxWidth: 400 }}>
-        <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 20, color: "#00d4ff" }}>{title}</div>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// ─── LOGIN ────────────────────────────────────────────────────────────────────
 function Login({ onLogin }) {
   const [tab, setTab] = useState("admin");
   const [user, setUser] = useState("");
@@ -214,13 +198,11 @@ function Login({ onLogin }) {
   );
 }
 
-// ─── ADMIN ────────────────────────────────────────────────────────────────────
 function AdminDash({ user, onLogout }) {
   const [view, setView] = useState("dash");
   const [store, setStore] = useState(loadStore());
   const unread = store.messages.filter(m => !m.read).length;
   const refresh = () => setStore(loadStore());
-
   const nav = [
     { id: "dash", icon: "◈", label: "Dashboard" },
     { id: "emp", icon: "◎", label: "Employees" },
@@ -228,7 +210,6 @@ function AdminDash({ user, onLogout }) {
     { id: "loc", icon: "⌖", label: "Office Location" },
     { id: "msg", icon: "◇", label: "Messages", badge: unread },
   ];
-
   return (
     <Shell user={user} onLogout={onLogout} nav={nav} active={view} setActive={v => { setView(v); refresh(); }}>
       {view === "dash" && <AdminOverview store={store}/>}
@@ -295,16 +276,11 @@ function AdminOverview({ store }) {
   );
 }
 
-// ─── EMPLOYEE MANAGER (with Edit Credentials) ─────────────────────────────────
 function EmpManager({ store, refresh }) {
   const [form, setForm] = useState({ name: "", department: "", year: "", username: "", password: "" });
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
-  const [delTarget, setDelTarget] = useState(null);
-  const [editTarget, setEditTarget] = useState(null); // for credential edit
-  const [editForm, setEditForm] = useState({ username: "", password: "" });
-  const [editErr, setEditErr] = useState("");
-  const [showEditPass, setShowEditPass] = useState(false);
+  const [del, setDel] = useState(null);
 
   function add() {
     setErr(""); setOk("");
@@ -318,22 +294,410 @@ function EmpManager({ store, refresh }) {
 
   function remove() {
     const s = loadStore();
-    s.employees = s.employees.filter(e => e.username !== delTarget);
-    delete s.attendance[delTarget];
-    s.messages = s.messages.filter(m => m.from !== delTarget);
-    saveStore(s); setDelTarget(null); refresh();
+    s.employees = s.employees.filter(e => e.username !== del);
+    delete s.attendance[del];
+    saveStore(s); setDel(null); refresh();
   }
 
-  function openEdit(emp) {
-    setEditTarget(emp);
-    setEditForm({ username: emp.username, password: emp.password });
-    setEditErr(""); setShowEditPass(false);
+  return (
+    <div className="fu">
+      <Title text="Manage Employees" sub={`${store.employees.length}/50`}/>
+      {del && (
+        <div style={{ position: "fixed", inset: 0, background: "#000b", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#0d1421", border: "1px solid #7f1d1d", borderRadius: 14, padding: "28px 32px", maxWidth: 340, width: "90%", textAlign: "center" }}>
+            <div style={{ fontSize: 28, marginBottom: 10 }}>&#9888;</div>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>Remove Employee?</div>
+            <div style={{ fontSize: 13, color: "#64748B", marginBottom: 22 }}>
+              This will permanently delete <strong style={{ color: "#E2E8F0" }}>{store.employees.find(e => e.username === del)?.name}</strong> and all their records.
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setDel(null)} style={{ flex: 1, padding: "10px", border: "1px solid #1e3a5f", borderRadius: 7, background: "transparent", color: "#94A3B8", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={remove} style={{ flex: 1, padding: "10px", border: "none", borderRadius: 7, background: "#7f1d1d", color: "#FCA5A5", cursor: "pointer", fontFamily: "inherit", fontWeight: 700 }}>Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, padding: "22px 20px", marginBottom: 24 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#00d4ff", marginBottom: 16, letterSpacing: 1 }}>ADD EMPLOYEE</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 10, marginBottom: 14 }}>
+          {[["name","Full Name"],["department","Department"],["year","Year / Batch"],["username","Username"],["password","Password"]].map(([k,p]) => (
+            <Field key={k} label={p.toUpperCase()} value={form[k]} onChange={e => setForm(x => ({ ...x, [k]: e.target.value }))} type={k === "password" ? "password" : "text"} placeholder={p}/>
+          ))}
+        </div>
+        {err && <div style={{ background: "#1a0a0a", border: "1px solid #7f1d1d", borderRadius: 7, padding: "8px 12px", color: "#FCA5A5", fontSize: 12, marginBottom: 10 }}>{err}</div>}
+        {ok && <div style={{ background: "#04290d", border: "1px solid #166534", borderRadius: 7, padding: "8px 12px", color: "#4ADE80", fontSize: 12, marginBottom: 10 }}>{ok}</div>}
+        <button onClick={add} style={{ padding: "10px 22px", background: "#00d4ff", border: "none", borderRadius: 7, color: "#050911", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>+ Add</button>
+      </div>
+      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead><tr style={{ borderBottom: "1px solid #0f2040" }}>
+            {["Name","Department","Year","Username",""].map(h => <th key={h} style={{ padding: "11px 18px", textAlign: "left", fontSize: 10, color: "#4A90D9", letterSpacing: 1, fontFamily: "'DM Mono',monospace" }}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {store.employees.length === 0 && <tr><td colSpan={5} style={{ padding: "32px", textAlign: "center", color: "#1e3a5f", fontSize: 13 }}>No employees yet.</td></tr>}
+            {store.employees.map((e, i) => (
+              <tr key={e.username} style={{ borderBottom: i < store.employees.length - 1 ? "1px solid #0a1628" : "none" }}>
+                <td style={{ padding: "12px 18px", fontWeight: 600 }}>{e.name}</td>
+                <td style={{ padding: "12px 18px", color: "#64748B", fontSize: 13 }}>{e.department}</td>
+                <td style={{ padding: "12px 18px", color: "#64748B", fontSize: 13 }}>{e.year}</td>
+                <td style={{ padding: "12px 18px", fontFamily: "'DM Mono',monospace", fontSize: 12, color: "#00d4ff" }}>{e.username}</td>
+                <td style={{ padding: "12px 18px" }}>
+                  <button onClick={() => setDel(e.username)}
+                    style={{ padding: "5px 12px", background: "#1a0505", border: "1px solid #7f1d1d", borderRadius: 6, color: "#FCA5A5", cursor: "pointer", fontSize: 11, fontWeight: 700, fontFamily: "inherit" }}
+                    onMouseOver={ev => ev.currentTarget.style.background = "#7f1d1d"}
+                    onMouseOut={ev => ev.currentTarget.style.background = "#1a0505"}>REMOVE</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function LocManager({ store, refresh }) {
+  const off = store.officeLocation || DEFAULT_OFFICE;
+  const [lat, setLat] = useState(off.lat.toString());
+  const [lng, setLng] = useState(off.lng.toString());
+  const [radius, setRadius] = useState((store.officeRadius || DEFAULT_RADIUS).toString());
+  const [status, setStatus] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  function save() {
+    const la = parseFloat(lat), lo = parseFloat(lng), r = parseInt(radius);
+    if (isNaN(la) || la < -90 || la > 90 || isNaN(lo) || lo < -180 || lo > 180) return setStatus("err:Invalid coordinates.");
+    if (isNaN(r) || r < 50 || r > 2000) return setStatus("err:Radius must be 50-2000 metres.");
+    const s = loadStore(); s.officeLocation = { lat: la, lng: lo }; s.officeRadius = r; saveStore(s); refresh();
+    setStatus("ok:Saved!"); setTimeout(() => setStatus(""), 2500);
   }
 
-  function saveCredentials() {
-    setEditErr("");
-    const { username, password } = editForm;
-    if (!username.trim() || !password.trim()) return setEditErr("Username and password cannot be empty.");
+  async function detect() {
+    setBusy(true); setStatus("");
+    if (navigator.geolocation) {
+      try {
+        await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(
+          p => { setLat(p.coords.latitude.toFixed(6)); setLng(p.coords.longitude.toFixed(6)); res(); },
+          rej, { enableHighAccuracy: true, timeout: 8000 }
+        ));
+        setBusy(false); setStatus("ok:GPS location captured. Click Save to apply."); return;
+      } catch {}
+    }
+    try {
+      const d = await (await fetch("https://ipapi.co/json/")).json();
+      if (d.latitude) { setLat(d.latitude.toFixed(6)); setLng(d.longitude.toFixed(6)); setBusy(false); setStatus("ok:Location detected via network. Click Save to apply."); return; }
+    } catch {}
+    setBusy(false); setStatus("err:Could not detect location.");
+  }
+
+  const isErr = status.startsWith("err:");
+  const msg = status.replace(/^(ok|err):/, "");
+
+  return (
+    <div className="fu">
+      <Title text="Office Location" sub="Employees must be within radius to mark present"/>
+      <div style={{ maxWidth: 620 }}>
+        <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, padding: "18px 20px", marginBottom: 16, display: "flex", gap: 28, flexWrap: "wrap" }}>
+          <div><div style={{ fontSize: 10, color: "#64748B", marginBottom: 3 }}>Current Latitude</div><div style={{ fontSize: 17, fontWeight: 700, color: "#00d4ff", fontFamily: "'DM Mono',monospace" }}>{(store.officeLocation?.lat || DEFAULT_OFFICE.lat).toFixed(6)}</div></div>
+          <div><div style={{ fontSize: 10, color: "#64748B", marginBottom: 3 }}>Current Longitude</div><div style={{ fontSize: 17, fontWeight: 700, color: "#00d4ff", fontFamily: "'DM Mono',monospace" }}>{(store.officeLocation?.lng || DEFAULT_OFFICE.lng).toFixed(6)}</div></div>
+          <div><div style={{ fontSize: 10, color: "#64748B", marginBottom: 3 }}>Allowed Radius</div><div style={{ fontSize: 17, fontWeight: 700, color: "#FBBF24", fontFamily: "'DM Mono',monospace" }}>{store.officeRadius || DEFAULT_RADIUS}m</div></div>
+        </div>
+        <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, padding: "22px 20px" }}>
+          <button onClick={detect} disabled={busy}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "#00d4ff12", border: "1px solid #00d4ff33", borderRadius: 8, color: "#00d4ff", cursor: busy ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 600, marginBottom: 20 }}>
+            <span className={busy ? "spin" : ""}>&#x2316;</span>
+            {busy ? "Detecting..." : "Use My Current Location"}
+          </button>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
+            <Field label="LATITUDE" value={lat} onChange={e => setLat(e.target.value)} placeholder="12.9716"/>
+            <Field label="LONGITUDE" value={lng} onChange={e => setLng(e.target.value)} placeholder="77.5946"/>
+            <Field label="RADIUS (m)" value={radius} onChange={e => setRadius(e.target.value)} placeholder="200"/>
+          </div>
+          {msg && <div style={{ background: isErr ? "#1a0a0a" : "#04290d", border: `1px solid ${isErr ? "#7f1d1d" : "#166534"}`, borderRadius: 7, padding: "8px 12px", color: isErr ? "#FCA5A5" : "#4ADE80", fontSize: 12, marginBottom: 12 }}>{msg}</div>}
+          <button onClick={save} style={{ padding: "10px 24px", background: "#00d4ff", border: "none", borderRadius: 7, color: "#050911", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Save Location</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AttViewer({ store }) {
+  const now = new Date();
+  const [sel_emp, setSel] = useState("all");
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const days = getMonthDays(year, month);
+
+  function rec(username, d) {
+    return store.attendance[username]?.[`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`];
+  }
+
+  const emps = sel_emp === "all" ? store.employees : store.employees.filter(e => e.username === sel_emp);
+
+  return (
+    <div className="fu">
+      <Title text="Attendance Records" sub={`${months[month]} ${year}`}/>
+      <div style={{ display: "flex", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
+        <select value={sel_emp} onChange={e => setSel(e.target.value)} style={sel}>
+          <option value="all">All Employees</option>
+          {store.employees.map(e => <option key={e.username} value={e.username}>{e.name}</option>)}
+        </select>
+        <select value={month} onChange={e => setMonth(+e.target.value)} style={sel}>
+          {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+        </select>
+        <select value={year} onChange={e => setYear(+e.target.value)} style={sel}>
+          {[2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+      </div>
+      {emps.length === 0 && <div style={{ color: "#1e3a5f", textAlign: "center", padding: 32 }}>No employees found.</div>}
+      {emps.map(emp => {
+        let p = 0, a = 0;
+        for (let d = 1; d <= days; d++) { const r = rec(emp.username, d); if (r?.status === "present") p++; if (r?.status === "absent") a++; }
+        return (
+          <div key={emp.username} style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, marginBottom: 18, overflow: "hidden" }}>
+            <div style={{ padding: "14px 20px", borderBottom: "1px solid #0f2040", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+              <div><span style={{ fontWeight: 700 }}>{emp.name}</span><span style={{ color: "#64748B", marginLeft: 10, fontSize: 12 }}>{emp.department}</span></div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <span style={{ fontSize: 10, padding: "3px 10px", borderRadius: 99, background: "#04290d", color: "#4ADE80", fontFamily: "'DM Mono',monospace" }}>&#10003; {p} Present</span>
+                <span style={{ fontSize: 10, padding: "3px 10px", borderRadius: 99, background: "#1a0505", color: "#FCA5A5", fontFamily: "'DM Mono',monospace" }}>&#10005; {a} Absent</span>
+              </div>
+            </div>
+            <div style={{ padding: "14px 16px", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(44px,1fr))", gap: 5 }}>
+              {Array.from({ length: days }, (_, i) => i + 1).map(d => {
+                const r = rec(emp.username, d);
+                const dn = new Date(`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`).toLocaleDateString("en",{weekday:"short"});
+                return (
+                  <div key={d} title={r?.reason || r?.status || "Not marked"}
+                    style={{ background: r?.status === "present" ? "#04290d" : r?.status === "absent" ? "#1a0505" : "#070d1a", border: `1px solid ${r?.status === "present" ? "#166534" : r?.status === "absent" ? "#7f1d1d" : "#0f2040"}`, borderRadius: 7, padding: "5px 3px", textAlign: "center" }}>
+                    <div style={{ fontSize: 8, color: "#4A90D9", fontFamily: "'DM Mono',monospace" }}>{dn}</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: r?.status === "present" ? "#4ADE80" : r?.status === "absent" ? "#FCA5A5" : "#334155" }}>{d}</div>
+                    <div style={{ fontSize: 8, color: r?.status === "present" ? "#4ADE80" : r?.status === "absent" ? "#FCA5A5" : "#1e3a5f" }}>{r?.status === "present" ? "✓" : r?.status === "absent" ? "✗" : "·"}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function MsgViewer({ store, refresh }) {
+  function markRead(id) { const s = loadStore(); s.messages = s.messages.map(m => m.id === id ? { ...m, read: true } : m); saveStore(s); refresh(); }
+  function markAll() { const s = loadStore(); s.messages = s.messages.map(m => ({ ...m, read: true })); saveStore(s); refresh(); }
+  const msgs = [...store.messages].reverse();
+  const unread = msgs.filter(m => !m.read).length;
+  return (
+    <div className="fu">
+      <Title text="Absence Messages" sub={`${unread} unread`}/>
+      {unread > 1 && <button onClick={markAll} style={{ marginBottom: 14, padding: "8px 16px", background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 7, color: "#94A3B8", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>Mark all read</button>}
+      {msgs.length === 0 && <div style={{ color: "#1e3a5f", padding: 36, textAlign: "center", background: "#0d1421", borderRadius: 13, border: "1px solid #0f2040" }}>No messages yet.</div>}
+      {msgs.map(m => (
+        <div key={m.id} style={{ background: "#0d1421", border: `1px solid ${m.read ? "#0f2040" : "#1e3a5f"}`, borderRadius: 11, padding: "16px 20px", marginBottom: 10, opacity: m.read ? 0.55 : 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontWeight: 700, color: "#00d4ff" }}>{m.fromName}</span>
+              <span style={{ color: "#334155", fontSize: 11, fontFamily: "'DM Mono',monospace" }}>{formatDate(m.date)}</span>
+              {!m.read && <span style={{ fontSize: 9, padding: "2px 7px", borderRadius: 99, background: "#04290d", color: "#4ADE80", fontFamily: "'DM Mono',monospace" }}>NEW</span>}
+            </div>
+            {!m.read && <button onClick={() => markRead(m.id)} style={{ padding: "4px 10px", background: "transparent", border: "1px solid #1e3a5f", borderRadius: 5, color: "#64748B", cursor: "pointer", fontSize: 11, fontFamily: "inherit" }}>Mark Read</button>}
+          </div>
+          <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, background: "#070d1a", borderRadius: 7, padding: "10px 13px" }}>{m.text}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmpDash({ user, onLogout }) {
+  const [view, setView] = useState("home");
+  const [store, setStore] = useState(loadStore());
+  const refresh = () => setStore(loadStore());
+  const nav = [{ id: "home", icon: "⌂", label: "Mark Attendance" }, { id: "records", icon: "◻", label: "My Records" }];
+  return (
+    <Shell user={user} onLogout={onLogout} nav={nav} active={view} setActive={v => { setView(v); refresh(); }}>
+      {view === "home" && <AttAction user={user} refresh={refresh} store={store}/>}
+      {view === "records" && <MyRecords user={user} store={store}/>}
+    </Shell>
+  );
+}
+
+function AttAction({ user, refresh, store }) {
+  const today = getTodayKey();
+  const [phase, setPhase] = useState(() => store.attendance[user.username]?.[today] ? "done" : "choose");
+  const [status, setStatus] = useState("");
+  const [reason, setReason] = useState("");
+
+  const office = store.officeLocation || DEFAULT_OFFICE;
+  const radius = store.officeRadius || DEFAULT_RADIUS;
+
+  function processCoords(lat, lng) {
+    const dist = getDistance(lat, lng, office.lat, office.lng);
     const s = loadStore();
-    const conflict = s.employees.find(e => e.username === username && e.username !== editTarget.username);
-    if (confli
+    if (!s.attendance[user.username]) s.attendance[user.username] = {};
+    const time = new Date().toLocaleTimeString("en-IN");
+    if (dist <= radius) {
+      s.attendance[user.username][today] = { status: "present", time, lat, lng };
+      saveStore(s); refresh(); setPhase("done");
+    } else {
+      s.attendance[user.username][today] = { status: "absent", time, reason: "Location mismatch" };
+      saveStore(s); refresh();
+      setStatus(`You are ${Math.round(dist)}m from the office. Allowed: ${radius}m.`);
+      setPhase("locFail");
+    }
+  }
+
+  async function markPresent() {
+    setPhase("locating"); setStatus("Getting your GPS location...");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => processCoords(pos.coords.latitude, pos.coords.longitude),
+        async () => {
+          setStatus("GPS access denied, trying network location...");
+          try {
+            const d = await (await fetch("https://ipapi.co/json/")).json();
+            if (d.latitude && d.longitude) { processCoords(d.latitude, d.longitude); return; }
+          } catch {}
+          setStatus("Location access is denied. Please enable location in browser settings and try again.");
+          setPhase("locFail");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      try {
+        const d = await (await fetch("https://ipapi.co/json/")).json();
+        if (d.latitude && d.longitude) { processCoords(d.latitude, d.longitude); return; }
+      } catch {}
+      setStatus("Location not available. Enable location for this browser and try again.");
+      setPhase("locFail");
+    }
+  }
+
+  function sendAbsent() {
+    if (!reason.trim()) return;
+    const s = loadStore();
+    if (!s.attendance[user.username]) s.attendance[user.username] = {};
+    const time = new Date().toLocaleTimeString("en-IN");
+    s.attendance[user.username][today] = { status: "absent", time, reason };
+    s.messages.push({ id: Date.now().toString(), from: user.username, fromName: user.name, text: reason, date: today, read: false });
+    saveStore(s); refresh(); setPhase("done");
+  }
+
+  const rec = loadStore().attendance[user.username]?.[today];
+
+  return (
+    <div className="fu">
+      <Title text="Today's Attendance" sub={formatDate(today)}/>
+      <div style={{ maxWidth: 500 }}>
+        {phase === "done" && rec && (
+          <div style={{ background: rec.status === "present" ? "#04290d" : "#1a0505", border: `1px solid ${rec.status === "present" ? "#166534" : "#7f1d1d"}`, borderRadius: 14, padding: "32px", textAlign: "center" }}>
+            <div style={{ fontSize: 48, marginBottom: 14 }}>{rec.status === "present" ? "✓" : "✗"}</div>
+            <div style={{ fontSize: 19, fontWeight: 800, color: rec.status === "present" ? "#4ADE80" : "#FCA5A5", marginBottom: 6 }}>{rec.status === "present" ? "Attendance Marked!" : "Marked Absent"}</div>
+            <div style={{ color: "#64748B", fontSize: 12, fontFamily: "'DM Mono',monospace" }}>{rec.time}</div>
+            {rec.reason && <div style={{ marginTop: 10, fontSize: 12, color: "#94A3B8", background: "#0a0a0a", borderRadius: 7, padding: "9px 13px" }}>{rec.reason}</div>}
+          </div>
+        )}
+        {phase === "choose" && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <button onClick={markPresent} style={{ background: "#04290d", border: "2px solid #166534", borderRadius: 13, padding: "28px 16px", cursor: "pointer", textAlign: "center" }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>&#128205;</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#4ADE80", marginBottom: 4 }}>Mark Present</div>
+              <div style={{ fontSize: 11, color: "#64748B" }}>Verify via GPS</div>
+            </button>
+            <button onClick={() => setPhase("absent")} style={{ background: "#1a0505", border: "2px solid #7f1d1d", borderRadius: 13, padding: "28px 16px", cursor: "pointer", textAlign: "center" }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>&#128221;</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#FCA5A5", marginBottom: 4 }}>Report Absence</div>
+              <div style={{ fontSize: 11, color: "#64748B" }}>Send reason to admin</div>
+            </button>
+          </div>
+        )}
+        {phase === "locating" && (
+          <div style={{ background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 13, padding: "40px", textAlign: "center" }}>
+            <div style={{ fontSize: 36, marginBottom: 14, animation: "blink 1.4s infinite" }}>&#128225;</div>
+            <div style={{ color: "#00d4ff", fontSize: 13, fontFamily: "'DM Mono',monospace" }}>{status}</div>
+          </div>
+        )}
+        {phase === "locFail" && (
+          <div style={{ background: "#1a0505", border: "1px solid #7f1d1d", borderRadius: 13, padding: "26px", textAlign: "center" }}>
+            <div style={{ fontSize: 32, marginBottom: 10 }}>&#9888;</div>
+            <div style={{ color: "#FCA5A5", fontSize: 13, marginBottom: 18, lineHeight: 1.7 }}>{status}</div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button onClick={() => { setPhase("choose"); setStatus(""); }} style={{ padding: "9px 18px", background: "transparent", border: "1px solid #7f1d1d", borderRadius: 7, color: "#FCA5A5", cursor: "pointer", fontFamily: "inherit", fontSize: 12 }}>Try Again</button>
+              <button onClick={() => setPhase("absent")} style={{ padding: "9px 18px", background: "transparent", border: "1px solid #334155", borderRadius: 7, color: "#94A3B8", cursor: "pointer", fontFamily: "inherit", fontSize: 12 }}>Report Absence</button>
+            </div>
+          </div>
+        )}
+        {phase === "absent" && (
+          <div style={{ background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 13, padding: "22px" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#FBBF24", marginBottom: 12, letterSpacing: 1 }}>REASON FOR ABSENCE</div>
+            <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Explain your absence to the admin..."
+              style={{ width: "100%", background: "#070d1a", border: "1px solid #1e3a5f", borderRadius: 7, padding: "11px 13px", color: "#E2E8F0", fontSize: 13, outline: "none", resize: "vertical", minHeight: 95, fontFamily: "inherit", lineHeight: 1.6 }}/>
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+              <button onClick={() => setPhase("choose")} style={{ flex: 1, padding: "10px", background: "transparent", border: "1px solid #1e3a5f", borderRadius: 7, color: "#64748B", cursor: "pointer", fontFamily: "inherit" }}>Back</button>
+              <button onClick={sendAbsent} disabled={!reason.trim()} style={{ flex: 2, padding: "10px", background: reason.trim() ? "#FBBF24" : "#1e3a5f", border: "none", borderRadius: 7, color: reason.trim() ? "#050911" : "#334155", cursor: reason.trim() ? "pointer" : "not-allowed", fontFamily: "inherit", fontWeight: 700 }}>Submit to Admin</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MyRecords({ user, store }) {
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const days = getMonthDays(year, month);
+  function rec(d) { return store.attendance[user.username]?.[`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`]; }
+  let p = 0, a = 0;
+  for (let d = 1; d <= days; d++) { const r = rec(d); if (r?.status === "present") p++; if (r?.status === "absent") a++; }
+  return (
+    <div className="fu">
+      <Title text="My Attendance" sub={`${months[month]} ${year}`}/>
+      <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+        <select value={month} onChange={e => setMonth(+e.target.value)} style={sel}>{months.map((m,i) => <option key={i} value={i}>{m}</option>)}</select>
+        <select value={year} onChange={e => setYear(+e.target.value)} style={sel}>{[2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}</select>
+      </div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+        {[["Present", p, "#4ADE80", "#04290d", "#166534"], ["Absent", a, "#FCA5A5", "#1a0505", "#7f1d1d"], ["Rate", `${p+a > 0 ? Math.round(p/(p+a)*100) : 0}%`, "#E2E8F0", "#0d1421", "#0f2040"]].map(([l,v,c,bg,br]) => (
+          <div key={l} style={{ background: bg, border: `1px solid ${br}`, borderRadius: 10, padding: "13px 20px" }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: c, fontFamily: "'DM Mono',monospace" }}>{v}</div>
+            <div style={{ fontSize: 10, color: "#4A90D9", letterSpacing: .5, marginTop: 2 }}>{l}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, padding: "14px", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(44px,1fr))", gap: 5 }}>
+        {Array.from({ length: days }, (_, i) => i + 1).map(d => {
+          const r = rec(d);
+          const dn = new Date(`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`).toLocaleDateString("en",{weekday:"short"});
+          return (
+            <div key={d} style={{ background: r?.status === "present" ? "#04290d" : r?.status === "absent" ? "#1a0505" : "#070d1a", border: `1px solid ${r?.status === "present" ? "#166534" : r?.status === "absent" ? "#7f1d1d" : "#0f2040"}`, borderRadius: 7, padding: "6px 3px", textAlign: "center" }}>
+              <div style={{ fontSize: 8, color: "#4A90D9", fontFamily: "'DM Mono',monospace" }}>{dn}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: r?.status === "present" ? "#4ADE80" : r?.status === "absent" ? "#FCA5A5" : "#334155" }}>{d}</div>
+              <div style={{ fontSize: 8, color: r?.status === "present" ? "#4ADE80" : r?.status === "absent" ? "#FCA5A5" : "#1e3a5f" }}>{r?.status === "present" ? "✓" : r?.status === "absent" ? "✗" : "·"}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [user, setUser] = useState(null);
+  return (
+    <div>
+      {!user && <Login onLogin={setUser}/>}
+      {user?.role === "admin" && <AdminDash user={user} onLogout={() => setUser(null)}/>}
+      {user?.role === "employee" && <EmpDash user={user} onLogout={() => setUser(null)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

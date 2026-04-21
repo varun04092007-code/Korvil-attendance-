@@ -1,31 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Korvil Attendance</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#050911;color:#E2E8F0;font-family:'Syne',sans-serif}
-input,select,textarea,button{font-family:inherit}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:#0d1421}
-::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:4px}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
-.fu{animation:fadeUp .35s ease both}
-.spin{animation:spin 1s linear infinite;display:inline-block}
-</style>
-</head>
-<body>
-<div id="root"></div>
-<script type="text/babel">
-const { useState } = React;
+import { useState } from "react";
 
 const ADMIN_CREDENTIALS = [{ username: "korvil_admin", password: "korviladmin_pass", name: "Admin" }];
 const DEFAULT_OFFICE = { lat: 12.9716, lng: 77.5946 };
@@ -43,10 +16,40 @@ function getTodayKey() { return new Date().toISOString().split("T")[0]; }
 function formatDate(d) { return new Date(d).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); }
 function getMonthDays(y, m) { return new Date(y, m + 1, 0).getDate(); }
 function loadStore() {
-  try { const s = localStorage.getItem("korvil_v3"); if (s) return JSON.parse(s); } catch {}
+  try { const s = localStorage.getItem("korvil_v4"); if (s) return JSON.parse(s); } catch {}
   return { employees: [], attendance: {}, messages: [], officeLocation: DEFAULT_OFFICE, officeRadius: DEFAULT_RADIUS };
 }
-function saveStore(s) { localStorage.setItem("korvil_v3", JSON.stringify(s)); }
+function saveStore(s) { localStorage.setItem("korvil_v4", JSON.stringify(s)); }
+
+// Fresh GPS — no IP fallback (IP geolocation is city-level and wildly inaccurate)
+function getFreshGPS() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) { reject({ code: "NO_API", msg: "Your browser does not support location. Try Chrome or Firefox." }); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy }),
+      err => {
+        if (err.code === 1) reject({ code: "DENIED", msg: "Location permission denied. Open your browser settings, allow location for this site, then try again." });
+        else if (err.code === 2) reject({ code: "UNAVAIL", msg: "GPS signal unavailable. Move to an open area or enable Wi-Fi location and try again." });
+        else reject({ code: "TIMEOUT", msg: "Location timed out. Make sure GPS is on and try again." });
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  });
+}
+
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:#050911;color:#E2E8F0;font-family:'Syne',sans-serif}
+  input,select,textarea,button{font-family:inherit}
+  ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#0d1421}::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:4px}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .fu{animation:fadeUp .35s ease both}
+  .spin{animation:spin 1s linear infinite;display:inline-block}
+  .blink{animation:blink 1.4s infinite}
+`;
 
 function Logo({ size = 32 }) {
   return (
@@ -72,15 +75,15 @@ function EyeIcon({ open }) {
   );
 }
 
-function Field({ label, value, onChange, type = "text", placeholder, right }) {
+function Field({ label, value, onChange, type = "text", placeholder, right, readOnly }) {
   return (
     <div>
       {label && <label style={{ display: "block", fontSize: 10, color: "#4A90D9", letterSpacing: 1, marginBottom: 5, fontFamily: "'DM Mono',monospace" }}>{label}</label>}
       <div style={{ position: "relative" }}>
-        <input value={value} onChange={onChange} type={type} placeholder={placeholder}
-          style={{ width: "100%", background: "#070d1a", border: "1px solid #1e3a5f", borderRadius: 9, padding: right ? "11px 44px 11px 14px" : "11px 14px", color: "#E2E8F0", fontSize: 14, outline: "none" }}
-          onFocus={e => e.target.style.borderColor = "#00d4ff"}
-          onBlur={e => e.target.style.borderColor = "#1e3a5f"} />
+        <input value={value} onChange={onChange} type={type} placeholder={placeholder} readOnly={readOnly}
+          style={{ width: "100%", background: readOnly ? "#060b17" : "#070d1a", border: "1px solid #1e3a5f", borderRadius: 9, padding: right ? "11px 44px 11px 14px" : "11px 14px", color: readOnly ? "#4A90D9" : "#E2E8F0", fontSize: 14, outline: "none" }}
+          onFocus={e => !readOnly && (e.target.style.borderColor = "#00d4ff")}
+          onBlur={e => (e.target.style.borderColor = "#1e3a5f")} />
         {right && <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}>{right}</div>}
       </div>
     </div>
@@ -139,6 +142,19 @@ function Title({ text, sub }) {
 
 const sel = { background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 8, padding: "9px 12px", color: "#E2E8F0", fontSize: 13, outline: "none", cursor: "pointer", fontFamily: "inherit" };
 
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function Modal({ title, onClose, children }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#000c", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="fu" style={{ background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 14, padding: "28px 28px", width: "90%", maxWidth: 400 }}>
+        <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 20, color: "#00d4ff" }}>{title}</div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
 function Login({ onLogin }) {
   const [tab, setTab] = useState("admin");
   const [user, setUser] = useState("");
@@ -198,11 +214,13 @@ function Login({ onLogin }) {
   );
 }
 
+// ─── ADMIN ────────────────────────────────────────────────────────────────────
 function AdminDash({ user, onLogout }) {
   const [view, setView] = useState("dash");
   const [store, setStore] = useState(loadStore());
   const unread = store.messages.filter(m => !m.read).length;
   const refresh = () => setStore(loadStore());
+
   const nav = [
     { id: "dash", icon: "◈", label: "Dashboard" },
     { id: "emp", icon: "◎", label: "Employees" },
@@ -210,6 +228,7 @@ function AdminDash({ user, onLogout }) {
     { id: "loc", icon: "⌖", label: "Office Location" },
     { id: "msg", icon: "◇", label: "Messages", badge: unread },
   ];
+
   return (
     <Shell user={user} onLogout={onLogout} nav={nav} active={view} setActive={v => { setView(v); refresh(); }}>
       {view === "dash" && <AdminOverview store={store}/>}
@@ -276,11 +295,16 @@ function AdminOverview({ store }) {
   );
 }
 
+// ─── EMPLOYEE MANAGER (with Edit Credentials) ─────────────────────────────────
 function EmpManager({ store, refresh }) {
   const [form, setForm] = useState({ name: "", department: "", year: "", username: "", password: "" });
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
-  const [del, setDel] = useState(null);
+  const [delTarget, setDelTarget] = useState(null);
+  const [editTarget, setEditTarget] = useState(null); // for credential edit
+  const [editForm, setEditForm] = useState({ username: "", password: "" });
+  const [editErr, setEditErr] = useState("");
+  const [showEditPass, setShowEditPass] = useState(false);
 
   function add() {
     setErr(""); setOk("");
@@ -294,34 +318,22 @@ function EmpManager({ store, refresh }) {
 
   function remove() {
     const s = loadStore();
-    s.employees = s.employees.filter(e => e.username !== del);
-    delete s.attendance[del];
-    saveStore(s); setDel(null); refresh();
+    s.employees = s.employees.filter(e => e.username !== delTarget);
+    delete s.attendance[delTarget];
+    s.messages = s.messages.filter(m => m.from !== delTarget);
+    saveStore(s); setDelTarget(null); refresh();
   }
 
-  return (
-    <div className="fu">
-      <Title text="Manage Employees" sub={`${store.employees.length}/50`}/>
-      {del && (
-        <div style={{ position: "fixed", inset: 0, background: "#000b", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "#0d1421", border: "1px solid #7f1d1d", borderRadius: 14, padding: "28px 32px", maxWidth: 340, width: "90%", textAlign: "center" }}>
-            <div style={{ fontSize: 28, marginBottom: 10 }}>&#9888;</div>
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>Remove Employee?</div>
-            <div style={{ fontSize: 13, color: "#64748B", marginBottom: 22 }}>
-              This will permanently delete <strong style={{ color: "#E2E8F0" }}>{store.employees.find(e => e.username === del)?.name}</strong> and all their records.
-            </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setDel(null)} style={{ flex: 1, padding: "10px", border: "1px solid #1e3a5f", borderRadius: 7, background: "transparent", color: "#94A3B8", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={remove} style={{ flex: 1, padding: "10px", border: "none", borderRadius: 7, background: "#7f1d1d", color: "#FCA5A5", cursor: "pointer", fontFamily: "inherit", fontWeight: 700 }}>Remove</button>
-            </div>
-          </div>
-        </div>
-      )}
-      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, padding: "22px 20px", marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#00d4ff", marginBottom: 16, letterSpacing: 1 }}>ADD EMPLOYEE</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 10, marginBottom: 14 }}>
-          {[["name","Full Name"],["department","Department"],["year","Year / Batch"],["username","Username"],["password","Password"]].map(([k,p]) => (
-            <Field key={k} label={p.toUpperCase()} value={form[k]} onChange={e => setForm(x => ({ ...x, [k]: e.target.value }))} type={k === "password" ? "password" : "text"} placeholder={p}/>
-          ))}
-        </div>
-        {err && <div style={{ background: "#1a0a0a", border: "1px solid #7f1d1d",
+  function openEdit(emp) {
+    setEditTarget(emp);
+    setEditForm({ username: emp.username, password: emp.password });
+    setEditErr(""); setShowEditPass(false);
+  }
+
+  function saveCredentials() {
+    setEditErr("");
+    const { username, password } = editForm;
+    if (!username.trim() || !password.trim()) return setEditErr("Username and password cannot be empty.");
+    const s = loadStore();
+    const conflict = s.employees.find(e => e.username === username && e.username !== editTarget.username);
+    if (confli

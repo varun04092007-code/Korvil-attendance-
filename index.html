@@ -13,8 +13,8 @@
   import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    databaseURL: "YOUR_DATABASE_URL"
+    apiKey: "AIzaSyCh3tioFWbpwcoNmmfGWpQ7hZUjtoZ6Uws",
+    databaseURL: "https://attendance-app-6c293-default-rtdb.asia-southeast1.firebasedatabase.app/"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -23,7 +23,8 @@
   const dataRef = ref(db, "attendance");
 
   onValue(dataRef, (snapshot) => {
-    document.getElementById("data").innerHTML = JSON.stringify(snapshot.val());
+    const data = snapshot.val();
+    document.getElementById("data").innerHTML = JSON.stringify(data);
   });
 </script>
 

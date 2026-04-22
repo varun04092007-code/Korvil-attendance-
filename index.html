@@ -3,1037 +3,400 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Korvil Attendance</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<title>KORVIL — Workforce Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#050911;color:#E2E8F0;font-family:'Syne',sans-serif}
+html,body{height:100%}
+body{background:#050911;color:#E2E8F0;font-family:'Syne',sans-serif;min-height:100vh}
 input,select,textarea,button{font-family:inherit}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:#0d1421}
 ::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:4px}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
-.fu{animation:fadeUp .35s ease both}
-.spin{animation:spin 1s linear infinite;display:inline-block}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes floatUp{0%{opacity:.5;transform:translateY(0)}100%{opacity:0;transform:translateY(-80vh)}}
+.fu{animation:fadeUp .32s ease both}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+.pulse{animation:pulse 1.5s ease-in-out infinite}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#050911 0%,#0a1628 50%,#050911 100%);
+  position:relative;overflow:hidden}
+#login-screen .dot-bg{position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:28px 28px;pointer-events:none}
+.particle{position:absolute;width:2px;height:2px;border-radius:50%;background:#00d4ff;
+  opacity:.5;bottom:0;animation:floatUp 7s ease-in-out infinite}
+#app-layout{display:flex;min-height:100vh}
+#sidebar{width:220px;background:#08101f;border-right:1px solid #0f2040;
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;
+  overflow-y:auto;z-index:100}
+#main{margin-left:220px;flex:1;padding:32px 36px;min-height:100vh;overflow-y:auto}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid #0f2040;display:flex;align-items:center;gap:10px}
+.sb-brand{font-size:15px;font-weight:800;letter-spacing:2.5px;color:#E2E8F0}
+.sb-user{padding:13px 14px;border-bottom:1px solid #0f2040;display:flex;align-items:center;gap:10px}
+.sb-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.sb-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-role{font-size:10px;color:#4A90D9;font-family:'DM Mono',monospace;letter-spacing:.5px}
+#nav{flex:1;padding:8px}
+.nav-btn{display:flex;align-items:center;gap:9px;width:100%;padding:10px 12px;
+  border-radius:8px;border:none;cursor:pointer;margin-bottom:3px;
+  background:transparent;color:#64748B;font-size:13px;font-weight:500;
+  text-align:left;position:relative;transition:all .15s;font-family:inherit}
+.nav-btn:hover{background:#0f2040;color:#94A3B8}
+.nav-btn.active{background:#00d4ff12;color:#00d4ff;font-weight:700}
+.nav-btn.active::before{content:'';position:absolute;left:0;top:15%;bottom:15%;
+  width:3px;border-radius:99px;background:#00d4ff}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.nav-badge{background:#00d4ff;color:#050911;font-size:9px;font-weight:800;
+  border-radius:99px;padding:2px 6px;margin-left:auto;font-family:'DM Mono',monospace}
+.sb-logout{margin:auto 8px 14px;padding:9px 12px;border:1px solid #1e3a5f;border-radius:8px;
+  background:transparent;color:#64748B;cursor:pointer;font-size:12px;
+  display:flex;align-items:center;gap:8px;font-family:inherit;transition:all .2s}
+.sb-logout:hover{color:#f87171;border-color:#f87171}
+.login-card{background:#0d1421;border:1px solid #1e3a5f;border-radius:18px;
+  padding:38px 34px;width:100%;max-width:400px;z-index:1;position:relative}
+.brand-name{font-size:20px;font-weight:800;letter-spacing:3px;color:#E2E8F0}
+.brand-sub{font-size:10px;color:#4A90D9;letter-spacing:1px;font-family:'DM Mono',monospace}
+.tab-wrap{display:flex;background:#070d1a;border-radius:9px;padding:3px;
+  margin-bottom:22px;border:1px solid #1e3a5f}
+.tab-btn{flex:1;padding:9px 0;border-radius:7px;border:none;cursor:pointer;
+  font-size:13px;font-weight:600;transition:all .18s;background:transparent;
+  color:#64748B;font-family:inherit}
+.tab-btn.active{background:#00d4ff;color:#050911}
+.field-wrap{margin-bottom:14px}
+.field-label{display:block;font-size:10px;color:#4A90D9;letter-spacing:1px;
+  margin-bottom:5px;font-family:'DM Mono',monospace}
+.field-input{width:100%;background:#070d1a;border:1px solid #1e3a5f;border-radius:9px;
+  padding:11px 14px;color:#E2E8F0;font-size:14px;outline:none;
+  transition:border-color .2s;font-family:inherit}
+.field-input:focus{border-color:#00d4ff}
+.pass-wrap{position:relative}
+.eye-btn{position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:#4A90D9;
+  display:flex;align-items:center;padding:2px;line-height:1}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,#00d4ff,#0ea5e9);
+  border:none;border-radius:9px;color:#050911;font-size:14px;font-weight:700;
+  cursor:pointer;letter-spacing:.5px;font-family:inherit;transition:opacity .2s}
+.btn-primary:hover{opacity:.88}
+.btn-primary:disabled{background:#1e3a5f;color:#334155;cursor:not-allowed;opacity:1}
+.btn-cyan{background:#00d4ff12;border:1px solid #00d4ff44;color:#00d4ff;
+  border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;
+  cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+.btn-cyan:hover{background:#00d4ff22}
+.btn-cyan:disabled{opacity:.4;cursor:not-allowed}
+.btn-save{padding:10px 24px;background:#00d4ff;border:none;border-radius:7px;
+  color:#050911;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-ghost{padding:9px 16px;background:transparent;border:1px solid #1e3a5f;
+  border-radius:7px;color:#64748B;cursor:pointer;font-size:12px;font-family:inherit}
+.btn-danger{background:#1a0505;border:1px solid #7f1d1d;color:#FCA5A5;
+  border-radius:6px;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit}
+.btn-danger:hover{background:#7f1d1d}
+.alert{border-radius:8px;padding:9px 13px;font-size:12px;margin-bottom:12px}
+.alert-err{background:#1a0a0a;border:1px solid #7f1d1d;color:#FCA5A5}
+.alert-ok{background:#04290d;border:1px solid #166534;color:#4ADE80}
+.card{background:#0d1421;border:1px solid #0f2040;border-radius:13px;overflow:hidden;margin-bottom:18px}
+.card-body{padding:20px}
+.card-header{padding:14px 20px;border-bottom:1px solid #0f2040;font-size:13px;font-weight:700}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:26px}
+.stat-card{background:#0d1421;border:1px solid #0f2040;border-radius:13px;padding:20px 18px;position:relative;overflow:hidden}
+.stat-top-bar{position:absolute;top:0;left:0;right:0;height:2px}
+.stat-icon{font-size:18px;margin-bottom:8px}
+.stat-value{font-size:28px;font-weight:800;font-family:'DM Mono',monospace;line-height:1}
+.stat-label{font-size:11px;color:#64748B;margin-top:5px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{padding:11px 18px;text-align:left;font-size:10px;color:#4A90D9;
+  letter-spacing:1px;font-family:'DM Mono',monospace;border-bottom:1px solid #0f2040}
+.tbl td{padding:11px 18px;border-bottom:1px solid #0a1628;font-size:13px}
+.tbl tr:last-child td{border-bottom:none}
+.status-pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;
+  font-family:'DM Mono',monospace;display:inline-block}
+.pill-present{background:#04290d;color:#4ADE80}
+.pill-absent{background:#1a0505;color:#FCA5A5}
+.pill-none{background:#0a1628;color:#334155}
+.pill-new{background:#04290d;color:#4ADE80;font-size:9px}
+.cal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:5px}
+.cal-day{border-radius:7px;padding:6px 3px;text-align:center;border:1px solid}
+.cal-dn{font-size:8px;color:#4A90D9;font-family:'DM Mono',monospace}
+.cal-d{font-size:12px;font-weight:700}
+.cal-s{font-size:8px}
+.day-present{background:#04290d;border-color:#166534}
+.day-absent{background:#1a0505;border-color:#7f1d1d}
+.day-none{background:#070d1a;border-color:#0f2040}
+.att-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:480px}
+.att-btn{border-radius:13px;padding:28px 16px;cursor:pointer;text-align:center;border:2px solid;
+  background:transparent;font-family:inherit;transition:transform .15s,opacity .15s}
+.att-btn:hover{transform:scale(1.02)}
+.att-btn-present{background:#04290d;border-color:#166534}
+.att-btn-absent{background:#1a0505;border-color:#7f1d1d}
+.att-btn-icon{font-size:32px;margin-bottom:10px}
+.att-btn-label{font-size:14px;font-weight:700}
+.att-btn-sub{font-size:11px;color:#64748B;margin-top:3px}
+.att-status-box{border-radius:13px;padding:32px 24px;text-align:center;border:1px solid;max-width:480px}
+.att-icon{font-size:48px;margin-bottom:14px}
+.att-title{font-size:19px;font-weight:800;margin-bottom:6px}
+.att-sub{color:#64748B;font-size:12px;font-family:'DM Mono',monospace}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;margin-bottom:14px}
+.page-title{font-size:22px;font-weight:800;letter-spacing:.3px;margin-bottom:4px}
+.page-sub{font-size:12px;color:#4A90D9;font-family:'DM Mono',monospace;margin-bottom:24px}
+.hidden{display:none!important}
+.flex{display:flex}
+.gap-8{gap:8px}
+.gap-10{gap:10px}
+.wrap{flex-wrap:wrap}
+.mb-16{margin-bottom:16px}
+.mb-20{margin-bottom:20px}
+.center{text-align:center}
+.mono{font-family:'DM Mono',monospace}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);
+  z-index:999;display:flex;align-items:center;justify-content:center}
+.modal-box{background:#0d1421;border:1px solid #7f1d1d;border-radius:14px;
+  padding:28px 30px;max-width:340px;width:90%;text-align:center}
+#sync-bar{position:fixed;bottom:0;left:0;right:0;background:#0a1628;
+  border-top:1px solid #1e3a5f;padding:8px 16px;font-size:11px;color:#4A90D9;
+  font-family:'DM Mono',monospace;display:flex;align-items:center;gap:8px;z-index:200}
+#sync-dot{width:7px;height:7px;border-radius:50%;background:#4ADE80;flex-shrink:0}
+#sync-dot.syncing{background:#FBBF24;animation:pulse 1s infinite}
+#sync-dot.err{background:#F87171}
+@media(max-width:640px){
+  #sidebar{width:200px}
+  #main{margin-left:200px;padding:20px 16px}
+  .att-grid{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  #sidebar{width:170px}
+  #main{margin-left:170px;padding:16px 12px}
+}
 </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const { useState, useEffect, useCallback } = React;
 
-const ADMIN_CREDENTIALS = [{ username: "korvil_admin", password: "korviladmin_pass", name: "Admin" }];
-const DEFAULT_OFFICE = { lat: 12.9716, lng: 77.5946 };
-const DEFAULT_RADIUS = 200;
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="dot-bg"></div>
+  <div id="particles-container"></div>
+  <div class="login-card fu">
+    <div class="flex gap-10 mb-20" style="align-items:center">
+      <svg width="42" height="42" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#0A0F1E"/>
+        <path d="M10 14 L20 26 L30 14" stroke="#00D4FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="20" r="3.5" fill="#00D4FF"/>
+      </svg>
+      <div>
+        <div class="brand-name">KORVIL</div>
+        <div class="brand-sub">WORKFORCE INTELLIGENCE</div>
+      </div>
+    </div>
+    <div class="tab-wrap">
+      <button class="tab-btn active" id="tab-admin">Admin</button>
+      <button class="tab-btn" id="tab-employee">Employee</button>
+    </div>
+    <div class="field-wrap">
+      <label class="field-label">USERNAME</label>
+      <input class="field-input" id="l-user" placeholder="korvil_admin"/>
+    </div>
+    <div class="field-wrap">
+      <label class="field-label">PASSWORD</label>
+      <div class="pass-wrap">
+        <input class="field-input" id="l-pass" type="password" placeholder="password" style="padding-right:42px"/>
+        <button class="eye-btn" id="eye-btn" type="button">
+          <svg id="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A90D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg id="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A90D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div id="l-err" class="alert alert-err hidden"></div>
+    <div id="l-loading" class="center hidden" style="color:#4A90D9;font-size:12px;margin-bottom:10px;font-family:'DM Mono',monospace">Signing in...</div>
+    <button class="btn-primary" id="l-submit" type="button">SIGN IN</button>
+    <div class="center" style="margin-top:14px;font-size:11px;color:#334155" id="l-hint">Admin accounts have full system access</div>
+  </div>
+</div>
 
-// ── Haversine distance (metres) ──────────────────────────────────────────────
-function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const toRad = x => (x * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+<!-- APP LAYOUT -->
+<div id="app-layout" class="hidden">
+  <aside id="sidebar">
+    <div class="sb-logo">
+      <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#0A0F1E"/>
+        <path d="M10 14 L20 26 L30 14" stroke="#00D4FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="20" r="3.5" fill="#00D4FF"/>
+      </svg>
+      <span class="sb-brand">KORVIL</span>
+    </div>
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-av" style="background:#00d4ff18;border:1px solid #00d4ff33;color:#00d4ff">A</div>
+      <div style="min-width:0">
+        <div class="sb-name" id="sb-name">Admin</div>
+        <div class="sb-role" id="sb-role">ADMIN</div>
+      </div>
+    </div>
+    <nav id="nav"></nav>
+    <button class="sb-logout" id="logout-btn">&#x238B; Sign Out</button>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<!-- SYNC BAR -->
+<div id="sync-bar" class="hidden">
+  <div id="sync-dot"></div>
+  <span id="sync-msg">Connected</span>
+</div>
+
+<!-- DELETE MODAL -->
+<div id="del-modal" class="modal-overlay hidden">
+  <div class="modal-box fu">
+    <div style="font-size:28px;margin-bottom:10px">&#9888;&#65039;</div>
+    <div style="font-weight:700;margin-bottom:6px;font-size:15px">Remove Employee?</div>
+    <div style="font-size:13px;color:#64748B;margin-bottom:22px">
+      This will permanently delete <strong id="del-name" style="color:#E2E8F0"></strong> and all their records.
+    </div>
+    <div class="flex gap-10" style="justify-content:center">
+      <button class="btn-ghost" id="del-cancel">Cancel</button>
+      <button id="del-confirm" style="padding:9px 20px;background:#7f1d1d;border:none;border-radius:7px;color:#FCA5A5;cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════
+var BIN_ID  = "69e81ab8aaba88219723fe8d";
+var API_KEY = "$2a$10$b9Nl8njKfKjleFCMFhcGOOba6VqA31d92haaQkLH3iKktOq/mC/oO";
+var BIN_URL = "https://api.jsonbin.io/v3/b/" + BIN_ID;
+
+var ADMINS = [{ username:"korvil_admin", password:"korviladmin_pass", name:"Admin" }];
+var DEFAULT_RADIUS = 200;
+var MONTHS_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+// ═══════════════════════════════════════════════
+//  DATABASE
+// ═══════════════════════════════════════════════
+var DB = { employees:[], attendance:{}, messages:[], officeLocation:null, officeRadius:200 };
+var lastFetch = 0;
+
+function emptyDB() {
+  return { employees:[], attendance:{}, messages:[], officeLocation:null, officeRadius:DEFAULT_RADIUS };
 }
 
-function getTodayKey() { return new Date().toISOString().split("T")[0]; }
-function formatDate(d) {
-  return new Date(d).toLocaleDateString("en-IN", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric"
+function fetchDB() {
+  setSyncState("syncing","Syncing...");
+  return fetch(BIN_URL + "/latest", {
+    headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" }
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  })
+  .then(function(data) {
+    DB = (data && data.employees !== undefined) ? data : emptyDB();
+    lastFetch = Date.now();
+    try { localStorage.setItem("korvil_db", JSON.stringify(DB)); } catch(e) {}
+    setSyncState("ok","Synced &#x2713;");
+  })
+  .catch(function() {
+    try {
+      var s = localStorage.getItem("korvil_db");
+      if (s) DB = JSON.parse(s);
+    } catch(e) {}
+    setSyncState("err","Offline &#x2014; cached data");
   });
 }
-function getMonthDays(y, m) { return new Date(y, m + 1, 0).getDate(); }
 
-function loadStore() {
-  try {
-    const s = localStorage.getItem("korvil_v3");
-    if (s) return JSON.parse(s);
-  } catch {}
-  return {
-    employees: [],
-    attendance: {},
-    messages: [],
-    officeLocation: DEFAULT_OFFICE,
-    officeRadius: DEFAULT_RADIUS
-  };
-}
-function saveStore(s) { localStorage.setItem("korvil_v3", JSON.stringify(s)); }
-
-// ── Geolocation helper — always requests fresh HIGH-ACCURACY fix ─────────────
-function getCurrentPosition() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("Geolocation is not supported by this browser."));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
-      err => {
-        let msg = "Unable to get location.";
-        if (err.code === 1) msg = "Location permission denied. Please allow location access and try again.";
-        else if (err.code === 2) msg = "Location unavailable. Please check your GPS/network.";
-        else if (err.code === 3) msg = "Location request timed out. Please try again.";
-        reject(new Error(msg));
-      },
-      {
-        enableHighAccuracy: true,  // ← force GPS, not IP/WiFi
-        timeout: 15000,
-        maximumAge: 0              // ← never use cached position
-      }
-    );
+function saveDB() {
+  try { localStorage.setItem("korvil_db", JSON.stringify(DB)); } catch(e) {}
+  setSyncState("syncing","Saving...");
+  return fetch(BIN_URL, {
+    method: "PUT",
+    headers: { "Content-Type":"application/json", "X-Master-Key": API_KEY },
+    body: JSON.stringify(DB)
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    setSyncState("ok","Saved &#x2713;");
+    lastFetch = Date.now();
+  })
+  .catch(function() {
+    setSyncState("err","Save failed &#x2014; check connection");
   });
 }
 
-// ── UI primitives ─────────────────────────────────────────────────────────────
-function Logo({ size = 32 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-      <rect width="40" height="40" rx="8" fill="#0A0F1E"/>
-      <path d="M10 14 L20 26 L30 14" stroke="#00D4FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="20" cy="20" r="3.5" fill="#00D4FF"/>
-    </svg>
-  );
+function setSyncState(state, msg) {
+  var dot = document.getElementById("sync-dot");
+  var txt = document.getElementById("sync-msg");
+  if (!dot || !txt) return;
+  dot.className = state === "syncing" ? "syncing" : state === "err" ? "err" : "";
+  txt.innerHTML = msg;
 }
 
-function EyeIcon({ open }) {
-  return open ? (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-    </svg>
-  ) : (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-      <line x1="1" y1="1" x2="23" y2="23"/>
-    </svg>
-  );
+setInterval(function() {
+  if (!currentUser) return;
+  if (Date.now() - lastFetch < 30000) return;
+  fetchDB().then(function() { if (currentPage) renderPage(currentPage); });
+}, 15000);
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+function todayKey() { return new Date().toISOString().split("T")[0]; }
+
+function fmtDate(d) {
+  if (!d) return "";
+  try { return new Date(d).toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"}); }
+  catch(e) { return d; }
 }
 
-function Field({ label, value, onChange, type = "text", placeholder, right, readOnly }) {
-  return (
-    <div>
-      {label && (
-        <label style={{ display: "block", fontSize: 10, color: "#4A90D9", letterSpacing: 1, marginBottom: 5, fontFamily: "'DM Mono',monospace" }}>
-          {label}
-        </label>
-      )}
-      <div style={{ position: "relative" }}>
-        <input
-          value={value}
-          onChange={onChange}
-          type={type}
-          placeholder={placeholder}
-          readOnly={readOnly}
-          style={{
-            width: "100%",
-            background: readOnly ? "#0a1220" : "#070d1a",
-            border: "1px solid #1e3a5f",
-            borderRadius: 9,
-            padding: right ? "11px 44px 11px 14px" : "11px 14px",
-            color: readOnly ? "#64748B" : "#E2E8F0",
-            fontSize: 14,
-            outline: "none"
-          }}
-          onFocus={e => { if (!readOnly) e.target.style.borderColor = "#00d4ff"; }}
-          onBlur={e => e.target.style.borderColor = "#1e3a5f"}
-        />
-        {right && (
-          <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}>{right}</div>
-        )}
-      </div>
-    </div>
-  );
+function daysInMonth(y,m) { return new Date(y,m+1,0).getDate(); }
+
+function haversine(lat1,lon1,lat2,lon2) {
+  var R = 6371000;
+  var dLat = (lat2-lat1)*Math.PI/180;
+  var dLon = (lon2-lon1)*Math.PI/180;
+  var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+          Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
-function Shell({ user, onLogout, nav, active, setActive, children }) {
-  const initials = user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
-  return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <aside style={{ width: 220, background: "#08101f", borderRight: "1px solid #0f2040", display: "flex", flexDirection: "column", position: "fixed", inset: "0 auto 0 0", zIndex: 100 }}>
-        <div style={{ padding: "20px 18px 16px", borderBottom: "1px solid #0f2040", display: "flex", alignItems: "center", gap: 10 }}>
-          <Logo size={28}/><span style={{ fontSize: 15, fontWeight: 800, letterSpacing: 2 }}>KORVIL</span>
-        </div>
-        <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid #0f2040", display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#00d4ff18", border: "1px solid #00d4ff33", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#00d4ff", flexShrink: 0 }}>{initials}</div>
-          <div style={{ overflow: "hidden" }}>
-            <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</div>
-            <div style={{ fontSize: 10, color: "#4A90D9", fontFamily: "'DM Mono',monospace" }}>
-              {user.role === "admin" ? "ADMIN" : (user.emp?.department || "EMPLOYEE").toUpperCase()}
-            </div>
-          </div>
-        </div>
-        <nav style={{ flex: 1, padding: "10px 8px", overflowY: "auto" }}>
-          {nav.map(n => {
-            const on = active === n.id;
-            return (
-              <button key={n.id} onClick={() => setActive(n.id)}
-                style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "10px 12px", borderRadius: 8, border: "none", cursor: "pointer", marginBottom: 3, background: on ? "#00d4ff10" : "transparent", color: on ? "#00d4ff" : "#64748B", fontSize: 13, fontWeight: on ? 600 : 400, textAlign: "left", position: "relative" }}>
-                <span style={{ fontSize: 15 }}>{n.icon}</span>
-                <span style={{ flex: 1 }}>{n.label}</span>
-                {n.badge > 0 && (
-                  <span style={{ background: "#00d4ff", color: "#050911", fontSize: 10, fontWeight: 700, borderRadius: 99, padding: "1px 6px", fontFamily: "'DM Mono',monospace" }}>{n.badge}</span>
-                )}
-                {on && <div style={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, borderRadius: 99, background: "#00d4ff" }}/>}
-              </button>
-            );
-          })}
-        </nav>
-        <button onClick={onLogout}
-          style={{ margin: "0 8px 14px", padding: "9px 12px", border: "1px solid #1e3a5f", borderRadius: 8, background: "transparent", color: "#64748B", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}
-          onMouseOver={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.borderColor = "#f87171"; }}
-          onMouseOut={e => { e.currentTarget.style.color = "#64748B"; e.currentTarget.style.borderColor = "#1e3a5f"; }}>
-          &#x238B; Sign Out
-        </button>
-      </aside>
-      <main style={{ marginLeft: 220, flex: 1, padding: "32px 36px", minHeight: "100vh" }}>{children}</main>
-    </div>
-  );
+function gv(id) {
+  var el = document.getElementById(id);
+  return el ? el.value : "";
 }
 
-function Title({ text, sub }) {
-  return (
-    <div style={{ marginBottom: 26 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: 0.3 }}>{text}</h2>
-      {sub && <p style={{ color: "#4A90D9", fontSize: 12, marginTop: 3, fontFamily: "'DM Mono',monospace" }}>{sub}</p>}
-    </div>
-  );
-}
+function showEl(el, msg) { el.textContent = msg; el.classList.remove("hidden"); }
 
-const sel = {
-  background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 8,
-  padding: "9px 12px", color: "#E2E8F0", fontSize: 13, outline: "none",
-  cursor: "pointer", fontFamily: "inherit"
-};
+// ═══════════════════════════════════════════════
+//  APP STATE
+// ═══════════════════════════════════════════════
+var currentUser = null;
+var currentPage = null;
+var currentTab  = "admin";
+var eyeOpen     = false;
+var delTarget   = null;
 
-// ── Login ─────────────────────────────────────────────────────────────────────
-function Login({ onLogin }) {
-  const [tab, setTab] = useState("admin");
-  const [user, setUser] = useState("");
-  const [pass, setPass] = useState("");
-  const [show, setShow] = useState(false);
-  const [err, setErr] = useState("");
-  const [loading, setLoading] = useState(false);
+// ═══════════════════════════════════════════════
+//  BIND STATIC ELEMENTS
+// ═══════════════════════════════════════════════
+document.getElementById("tab-admin").addEventListener("click", function() { switchTab("admin"); });
+document.getElementById("tab-employee").addEventListener("click", function() { switchTab("employee"); });
+document.getElementById("l-submit").addEventListener("click", doLogin);
+document.getElementById("l-user").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
+document.getElementById("l-pass").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
+document.getElementById("logout-btn").addEventListener("click", doLogout);
+document.getElementById("del-cancel").addEventListener("click", closeDelModal);
+document.getElementById("del-confirm").addEventListener("click", confirmDel);
 
-  function go() {
-    setErr(""); setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      const s = loadStore();
-      if (tab === "admin") {
-        const a = ADMIN_CREDENTIALS.find(x => x.username === user && x.password === pass);
-        if (a) return onLogin({ role: "admin", username: user, name: a.name });
-        setErr("Invalid admin credentials.");
-      } else {
-        const e = s.employees.find(x => x.username === user && x.password === pass);
-        if (e) return onLogin({ role: "employee", username: user, name: e.name, emp: e });
-        setErr("Invalid employee credentials.");
-      }
-    }, 380);
-  }
-
-  return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#050911,#0a1628 50%,#050911)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle,#ffffff07 1px,transparent 1px)", backgroundSize: "30px 30px", pointerEvents: "none" }}/>
-      <div className="fu" style={{ background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 18, padding: "40px 36px", width: "100%", maxWidth: 400, zIndex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
-          <Logo size={44}/>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: 3 }}>KORVIL</div>
-            <div style={{ fontSize: 10, color: "#4A90D9", letterSpacing: 1, fontFamily: "'DM Mono',monospace" }}>WORKFORCE INTELLIGENCE</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", background: "#070d1a", borderRadius: 9, padding: 3, marginBottom: 24, border: "1px solid #1e3a5f" }}>
-          {["admin","employee"].map(t => (
-            <button key={t} onClick={() => { setTab(t); setErr(""); setUser(""); setPass(""); }}
-              style={{ flex: 1, padding: "9px 0", borderRadius: 7, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, transition: "all .18s", background: tab === t ? "#00d4ff" : "transparent", color: tab === t ? "#050911" : "#64748B" }}>
-              {t === "admin" ? "Admin" : "Employee"}
-            </button>
-          ))}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 16 }}>
-          <Field label="USERNAME" value={user} onChange={e => setUser(e.target.value)} placeholder={tab === "admin" ? "korvil_admin" : "your_username"}/>
-          <Field label="PASSWORD" value={pass} onChange={e => setPass(e.target.value)} type={show ? "text" : "password"} placeholder="password"
-            right={<button onClick={() => setShow(p => !p)} style={{ background: "none", border: "none", cursor: "pointer", color: "#4A90D9", display: "flex", alignItems: "center", padding: 0 }}><EyeIcon open={show}/></button>}/>
-        </div>
-        {err && <div style={{ background: "#1a0a0a", border: "1px solid #7f1d1d", borderRadius: 8, padding: "9px 13px", color: "#FCA5A5", fontSize: 12, marginBottom: 14 }}>{err}</div>}
-        <button onClick={go} disabled={loading}
-          style={{ width: "100%", padding: "13px", background: loading ? "#1e3a5f" : "linear-gradient(135deg,#00d4ff,#0ea5e9)", border: "none", borderRadius: 9, color: loading ? "#4A90D9" : "#050911", fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", letterSpacing: 1 }}>
-          {loading ? "Signing in..." : "SIGN IN"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Admin Dashboard ───────────────────────────────────────────────────────────
-function AdminDash({ user, onLogout }) {
-  const [view, setView] = useState("dash");
-  const [store, setStore] = useState(loadStore());
-  const unread = store.messages.filter(m => !m.read).length;
-  const refresh = () => setStore(loadStore());
-  const nav = [
-    { id: "dash", icon: "◈", label: "Dashboard" },
-    { id: "emp", icon: "◎", label: "Employees" },
-    { id: "att", icon: "◻", label: "Attendance" },
-    { id: "loc", icon: "⌖", label: "Office Location" },
-    { id: "msg", icon: "◇", label: "Messages", badge: unread },
-  ];
-  return (
-    <Shell user={user} onLogout={onLogout} nav={nav} active={view} setActive={v => { setView(v); refresh(); }}>
-      {view === "dash" && <AdminOverview store={store}/>}
-      {view === "emp" && <EmpManager store={store} refresh={refresh}/>}
-      {view === "att" && <AttViewer store={store}/>}
-      {view === "loc" && <LocManager store={store} refresh={refresh}/>}
-      {view === "msg" && <MsgViewer store={store} refresh={refresh}/>}
-    </Shell>
-  );
-}
-
-function StatCard({ label, value, icon, color }) {
-  return (
-    <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, padding: "22px 20px", position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: color }}/>
-      <div style={{ fontSize: 20, marginBottom: 8 }}>{icon}</div>
-      <div style={{ fontSize: 30, fontWeight: 800, color, fontFamily: "'DM Mono',monospace", lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 11, color: "#64748B", marginTop: 4 }}>{label}</div>
-    </div>
-  );
-}
-
-function AdminOverview({ store }) {
-  const today = getTodayKey();
-  const present = store.employees.filter(e => store.attendance[e.username]?.[today]?.status === "present").length;
-  const absent = store.employees.filter(e => store.attendance[e.username]?.[today]?.status === "absent").length;
-  const unread = store.messages.filter(m => !m.read).length;
-  return (
-    <div className="fu">
-      <Title text="Dashboard" sub={formatDate(today)}/>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(170px,1fr))", gap: 14, marginBottom: 28 }}>
-        <StatCard label="Total Employees" value={store.employees.length} icon="◎" color="#00d4ff"/>
-        <StatCard label="Present Today" value={present} icon="✓" color="#4ADE80"/>
-        <StatCard label="Absent Today" value={absent} icon="✗" color="#F87171"/>
-        <StatCard label="Unread Messages" value={unread} icon="◇" color="#FBBF24"/>
-      </div>
-      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, overflow: "hidden" }}>
-        <div style={{ padding: "15px 20px", borderBottom: "1px solid #0f2040", fontSize: 13, fontWeight: 700 }}>Today's Attendance</div>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #0f2040" }}>
-            {["Name","Department","Status","Time"].map(h => (
-              <th key={h} style={{ padding: "11px 20px", textAlign: "left", fontSize: 10, color: "#4A90D9", letterSpacing: 1, fontFamily: "'DM Mono',monospace" }}>{h}</th>
-            ))}
-          </tr></thead>
-          <tbody>
-            {store.employees.length === 0 && (
-              <tr><td colSpan={4} style={{ padding: "30px", textAlign: "center", color: "#1e3a5f", fontSize: 13 }}>No employees yet.</td></tr>
-            )}
-            {store.employees.map((e, i) => {
-              const rec = store.attendance[e.username]?.[today];
-              return (
-                <tr key={e.username} style={{ borderBottom: i < store.employees.length - 1 ? "1px solid #0a1628" : "none" }}>
-                  <td style={{ padding: "12px 20px", fontWeight: 600 }}>{e.name}</td>
-                  <td style={{ padding: "12px 20px", color: "#64748B", fontSize: 13 }}>{e.department}</td>
-                  <td style={{ padding: "12px 20px" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: rec?.status === "present" ? "#04290d" : rec?.status === "absent" ? "#1a0505" : "#0a1628", color: rec?.status === "present" ? "#4ADE80" : rec?.status === "absent" ? "#FCA5A5" : "#334155", fontFamily: "'DM Mono',monospace" }}>
-                      {(rec?.status || "—").toUpperCase()}
-                    </span>
-                  </td>
-                  <td style={{ padding: "12px 20px", color: "#64748B", fontSize: 12, fontFamily: "'DM Mono',monospace" }}>{rec?.time || "—"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ── Employee Manager (with edit credentials) ──────────────────────────────────
-function EmpManager({ store, refresh }) {
-  const [form, setForm] = useState({ name: "", department: "", year: "", username: "", password: "" });
-  const [err, setErr] = useState("");
-  const [ok, setOk] = useState("");
-  const [del, setDel] = useState(null);
-  const [editTarget, setEditTarget] = useState(null); // employee username being edited
-  const [editForm, setEditForm] = useState({ name: "", department: "", year: "", username: "", password: "" });
-  const [editErr, setEditErr] = useState("");
-  const [editOk, setEditOk] = useState("");
-  const [showEditPass, setShowEditPass] = useState(false);
-  const [showAddPass, setShowAddPass] = useState(false);
-
-  function add() {
-    setErr(""); setOk("");
-    if (Object.values(form).some(v => !v.trim())) return setErr("All fields are required.");
-    if (store.employees.length >= 50) return setErr("Max 50 employees.");
-    if (store.employees.find(e => e.username === form.username.trim())) return setErr("Username already exists.");
-    const s = loadStore();
-    s.employees.push({ name: form.name.trim(), department: form.department.trim(), year: form.year.trim(), username: form.username.trim(), password: form.password });
-    saveStore(s);
-    setOk(`"${form.name}" added!`);
-    setForm({ name: "", department: "", year: "", username: "", password: "" });
-    refresh();
-    setTimeout(() => setOk(""), 3000);
-  }
-
-  function remove() {
-    const s = loadStore();
-    s.employees = s.employees.filter(e => e.username !== del);
-    delete s.attendance[del];
-    saveStore(s); setDel(null); refresh();
-  }
-
-  function openEdit(emp) {
-    setEditTarget(emp.username);
-    setEditForm({ name: emp.name, department: emp.department, year: emp.year, username: emp.username, password: emp.password });
-    setEditErr(""); setEditOk("");
-  }
-
-  function saveEdit() {
-    setEditErr(""); setEditOk("");
-    const { name, department, year, username, password } = editForm;
-    if (!name.trim() || !department.trim() || !year.trim() || !username.trim() || !password.trim()) {
-      return setEditErr("All fields are required.");
-    }
-    const s = loadStore();
-    // Check username conflict (excluding self)
-    if (username.trim() !== editTarget && s.employees.find(e => e.username === username.trim())) {
-      return setEditErr("Username already taken by another employee.");
-    }
-    const idx = s.employees.findIndex(e => e.username === editTarget);
-    if (idx === -1) return setEditErr("Employee not found.");
-
-    const oldUsername = editTarget;
-    const newUsername = username.trim();
-
-    // Update employee record
-    s.employees[idx] = { name: name.trim(), department: department.trim(), year: year.trim(), username: newUsername, password };
-
-    // If username changed, migrate attendance records
-    if (oldUsername !== newUsername && s.attendance[oldUsername]) {
-      s.attendance[newUsername] = s.attendance[oldUsername];
-      delete s.attendance[oldUsername];
-    }
-
-    saveStore(s);
-    setEditOk("Changes saved!");
-    setEditTarget(null);
-    refresh();
-    setTimeout(() => setEditOk(""), 3000);
-  }
-
-  return (
-    <div className="fu">
-      <Title text="Manage Employees" sub={`${store.employees.length}/50`}/>
-
-      {/* Delete confirm modal */}
-      {del && (
-        <div style={{ position: "fixed", inset: 0, background: "#000b", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "#0d1421", border: "1px solid #7f1d1d", borderRadius: 14, padding: "28px 32px", maxWidth: 340, width: "90%", textAlign: "center" }}>
-            <div style={{ fontSize: 28, marginBottom: 10 }}>&#9888;</div>
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>Remove Employee?</div>
-            <div style={{ fontSize: 13, color: "#64748B", marginBottom: 22 }}>
-              This will permanently delete <strong style={{ color: "#E2E8F0" }}>{store.employees.find(e => e.username === del)?.name}</strong> and all their records.
-            </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setDel(null)} style={{ flex: 1, padding: "10px", border: "1px solid #1e3a5f", borderRadius: 7, background: "transparent", color: "#94A3B8", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={remove} style={{ flex: 1, padding: "10px", border: "none", borderRadius: 7, background: "#7f1d1d", color: "#FCA5A5", cursor: "pointer", fontFamily: "inherit", fontWeight: 700 }}>Remove</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit credentials modal */}
-      {editTarget && (
-        <div style={{ position: "fixed", inset: 0, background: "#000c", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div style={{ background: "#0d1421", border: "1px solid #1e3a5f", borderRadius: 14, padding: "28px 28px", maxWidth: 420, width: "100%" }}>
-            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Edit Employee</div>
-            <div style={{ fontSize: 11, color: "#4A90D9", fontFamily: "'DM Mono',monospace", marginBottom: 20 }}>
-              {editForm.username}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 14 }}>
-              <Field label="FULL NAME" value={editForm.name} onChange={e => setEditForm(x => ({ ...x, name: e.target.value }))} placeholder="Full Name"/>
-              <Field label="DEPARTMENT" value={editForm.department} onChange={e => setEditForm(x => ({ ...x, department: e.target.value }))} placeholder="Department"/>
-              <Field label="YEAR / BATCH" value={editForm.year} onChange={e => setEditForm(x => ({ ...x, year: e.target.value }))} placeholder="Year"/>
-              <Field label="USERNAME" value={editForm.username} onChange={e => setEditForm(x => ({ ...x, username: e.target.value }))} placeholder="Username"/>
-              <Field label="PASSWORD" value={editForm.password}
-                onChange={e => setEditForm(x => ({ ...x, password: e.target.value }))}
-                type={showEditPass ? "text" : "password"} placeholder="Password"
-                right={<button onClick={() => setShowEditPass(p => !p)} style={{ background: "none", border: "none", cursor: "pointer", color: "#4A90D9", display: "flex", alignItems: "center", padding: 0 }}><EyeIcon open={showEditPass}/></button>}/>
-            </div>
-            {editErr && <div style={{ background: "#1a0a0a", border: "1px solid #7f1d1d", borderRadius: 8, padding: "9px 13px", color: "#FCA5A5", fontSize: 12, marginBottom: 12 }}>{editErr}</div>}
-            {editOk && <div style={{ background: "#021a0a", border: "1px solid #14532d", borderRadius: 8, padding: "9px 13px", color: "#4ADE80", fontSize: 12, marginBottom: 12 }}>{editOk}</div>}
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setEditTarget(null)} style={{ flex: 1, padding: "10px", border: "1px solid #1e3a5f", borderRadius: 7, background: "transparent", color: "#94A3B8", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={saveEdit} style={{ flex: 1, padding: "10px", border: "none", borderRadius: 7, background: "linear-gradient(135deg,#00d4ff,#0ea5e9)", color: "#050911", cursor: "pointer", fontFamily: "inherit", fontWeight: 700 }}>Save Changes</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add form */}
-      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, padding: "22px 20px", marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#00d4ff", marginBottom: 16, letterSpacing: 1 }}>ADD EMPLOYEE</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 10, marginBottom: 14 }}>
-          {[["name","Full Name"],["department","Department"],["year","Year / Batch"],["username","Username"]].map(([k,p]) => (
-            <Field key={k} label={p.toUpperCase()} value={form[k]} onChange={e => setForm(x => ({ ...x, [k]: e.target.value }))} placeholder={p}/>
-          ))}
-          <Field label="PASSWORD" value={form.password} onChange={e => setForm(x => ({ ...x, password: e.target.value }))}
-            type={showAddPass ? "text" : "password"} placeholder="Password"
-            right={<button onClick={() => setShowAddPass(p => !p)} style={{ background: "none", border: "none", cursor: "pointer", color: "#4A90D9", display: "flex", alignItems: "center", padding: 0 }}><EyeIcon open={showAddPass}/></button>}/>
-        </div>
-        {err && <div style={{ background: "#1a0a0a", border: "1px solid #7f1d1d", borderRadius: 8, padding: "9px 13px", color: "#FCA5A5", fontSize: 12, marginBottom: 10 }}>{err}</div>}
-        {ok && <div style={{ background: "#021a0a", border: "1px solid #14532d", borderRadius: 8, padding: "9px 13px", color: "#4ADE80", fontSize: 12, marginBottom: 10 }}>{ok}</div>}
-        <button onClick={add}
-          style={{ padding: "10px 22px", background: "linear-gradient(135deg,#00d4ff,#0ea5e9)", border: "none", borderRadius: 8, color: "#050911", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
-          + Add Employee
-        </button>
-      </div>
-
-      {/* Employee list */}
-      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, overflow: "hidden" }}>
-        <div style={{ padding: "15px 20px", borderBottom: "1px solid #0f2040", fontSize: 13, fontWeight: 700 }}>Employee List</div>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #0f2040" }}>
-            {["Name","Dept","Year","Username","Actions"].map(h => (
-              <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: 10, color: "#4A90D9", letterSpacing: 1, fontFamily: "'DM Mono',monospace" }}>{h}</th>
-            ))}
-          </tr></thead>
-          <tbody>
-            {store.employees.length === 0 && (
-              <tr><td colSpan={5} style={{ padding: 30, textAlign: "center", color: "#1e3a5f" }}>No employees yet.</td></tr>
-            )}
-            {store.employees.map((e, i) => (
-              <tr key={e.username} style={{ borderBottom: i < store.employees.length - 1 ? "1px solid #0a1628" : "none" }}>
-                <td style={{ padding: "12px 16px", fontWeight: 600 }}>{e.name}</td>
-                <td style={{ padding: "12px 16px", color: "#64748B", fontSize: 13 }}>{e.department}</td>
-                <td style={{ padding: "12px 16px", color: "#64748B", fontSize: 13 }}>{e.year}</td>
-                <td style={{ padding: "12px 16px", fontSize: 12, fontFamily: "'DM Mono',monospace", color: "#4A90D9" }}>{e.username}</td>
-                <td style={{ padding: "12px 16px" }}>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => openEdit(e)}
-                      style={{ padding: "5px 12px", background: "#0a1628", border: "1px solid #1e3a5f", borderRadius: 6, color: "#00d4ff", cursor: "pointer", fontSize: 11, fontFamily: "inherit" }}>
-                      Edit
-                    </button>
-                    <button onClick={() => setDel(e.username)}
-                      style={{ padding: "5px 12px", background: "#1a0505", border: "1px solid #7f1d1d", borderRadius: 6, color: "#FCA5A5", cursor: "pointer", fontSize: 11, fontFamily: "inherit" }}>
-                      Remove
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ── Attendance Viewer ─────────────────────────────────────────────────────────
-function AttViewer({ store }) {
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
-  const [emp, setEmp] = useState(store.employees[0]?.username || "");
-  useEffect(() => { if (!emp && store.employees[0]) setEmp(store.employees[0].username); }, [store.employees]);
-
-  const days = getMonthDays(year, month);
-  const empObj = store.employees.find(e => e.username === emp);
-
-  const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
-  let presCount = 0, absCount = 0;
-  for (let d = 1; d <= days; d++) {
-    const key = `${monthStr}-${String(d).padStart(2, "0")}`;
-    const st = store.attendance[emp]?.[key]?.status;
-    if (st === "present") presCount++;
-    else if (st === "absent") absCount++;
-  }
-
-  return (
-    <div className="fu">
-      <Title text="Attendance Records"/>
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        <select value={emp} onChange={e => setEmp(e.target.value)} style={sel}>
-          {store.employees.length === 0 && <option value="">No employees</option>}
-          {store.employees.map(e => <option key={e.username} value={e.username}>{e.name}</option>)}
-        </select>
-        <select value={month} onChange={e => setMonth(+e.target.value)} style={sel}>
-          {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
-            <option key={i} value={i}>{m}</option>
-          ))}
-        </select>
-        <select value={year} onChange={e => setYear(+e.target.value)} style={sel}>
-          {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-      </div>
-      {empObj && (
-        <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-          <div style={{ background: "#021a0a", border: "1px solid #14532d", borderRadius: 9, padding: "10px 18px" }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#4ADE80", fontFamily: "'DM Mono',monospace" }}>{presCount}</div>
-            <div style={{ fontSize: 10, color: "#64748B" }}>Present</div>
-          </div>
-          <div style={{ background: "#1a0505", border: "1px solid #7f1d1d", borderRadius: 9, padding: "10px 18px" }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#FCA5A5", fontFamily: "'DM Mono',monospace" }}>{absCount}</div>
-            <div style={{ fontSize: 10, color: "#64748B" }}>Absent</div>
-          </div>
-        </div>
-      )}
-      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #0f2040" }}>
-            {["Date","Day","Status","Time","Note"].map(h => (
-              <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: 10, color: "#4A90D9", letterSpacing: 1, fontFamily: "'DM Mono',monospace" }}>{h}</th>
-            ))}
-          </tr></thead>
-          <tbody>
-            {!emp && <tr><td colSpan={5} style={{ padding: 30, textAlign: "center", color: "#1e3a5f" }}>Select an employee.</td></tr>}
-            {emp && Array.from({ length: days }, (_, i) => {
-              const d = i + 1;
-              const key = `${monthStr}-${String(d).padStart(2, "0")}`;
-              const rec = store.attendance[emp]?.[key];
-              const dayName = new Date(year, month, d).toLocaleDateString("en-IN", { weekday: "short" });
-              return (
-                <tr key={d} style={{ borderBottom: i < days - 1 ? "1px solid #070e1c" : "none" }}>
-                  <td style={{ padding: "10px 16px", fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{key}</td>
-                  <td style={{ padding: "10px 16px", color: "#64748B", fontSize: 12 }}>{dayName}</td>
-                  <td style={{ padding: "10px 16px" }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99, background: rec?.status === "present" ? "#04290d" : rec?.status === "absent" ? "#1a0505" : "#0a1628", color: rec?.status === "present" ? "#4ADE80" : rec?.status === "absent" ? "#FCA5A5" : "#334155", fontFamily: "'DM Mono',monospace" }}>
-                      {(rec?.status || "—").toUpperCase()}
-                    </span>
-                  </td>
-                  <td style={{ padding: "10px 16px", color: "#64748B", fontSize: 11, fontFamily: "'DM Mono',monospace" }}>{rec?.time || "—"}</td>
-                  <td style={{ padding: "10px 16px", color: "#64748B", fontSize: 11 }}>{rec?.note || ""}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ── Office Location Manager ───────────────────────────────────────────────────
-function LocManager({ store, refresh }) {
-  const [latStr, setLatStr] = useState(String(store.officeLocation?.lat ?? DEFAULT_OFFICE.lat));
-  const [lngStr, setLngStr] = useState(String(store.officeLocation?.lng ?? DEFAULT_OFFICE.lng));
-  const [radius, setRadius] = useState(store.officeRadius ?? DEFAULT_RADIUS);
-  const [locLoading, setLocLoading] = useState(false);
-  const [locErr, setLocErr] = useState("");
-  const [ok, setOk] = useState("");
-
-  // Keep fields in sync when store changes
-  useEffect(() => {
-    setLatStr(String(store.officeLocation?.lat ?? DEFAULT_OFFICE.lat));
-    setLngStr(String(store.officeLocation?.lng ?? DEFAULT_OFFICE.lng));
-    setRadius(store.officeRadius ?? DEFAULT_RADIUS);
-  }, [store.officeLocation, store.officeRadius]);
-
-  function save() {
-    setLocErr(""); setOk("");
-    const lat = parseFloat(latStr);
-    const lng = parseFloat(lngStr);
-    const r = parseFloat(radius);
-    if (isNaN(lat) || lat < -90 || lat > 90) return setLocErr("Latitude must be between -90 and 90.");
-    if (isNaN(lng) || lng < -180 || lng > 180) return setLocErr("Longitude must be between -180 and 180.");
-    if (isNaN(r) || r < 10 || r > 10000) return setLocErr("Radius must be between 10 and 10000 metres.");
-    const s = loadStore();
-    s.officeLocation = { lat, lng };
-    s.officeRadius = r;
-    saveStore(s);
-    refresh();
-    setOk("Office location saved!");
-    setTimeout(() => setOk(""), 3000);
-  }
-
-  async function useMyLocation() {
-    setLocErr(""); setOk(""); setLocLoading(true);
-    try {
-      const pos = await getCurrentPosition();
-      setLatStr(String(pos.lat));
-      setLngStr(String(pos.lng));
-      setOk(`Got your location! Accuracy: ~${Math.round(pos.accuracy)}m. Click Save to apply.`);
-    } catch (e) {
-      setLocErr(e.message);
-    } finally {
-      setLocLoading(false);
-    }
-  }
-
-  return (
-    <div className="fu">
-      <Title text="Office Location" sub="Set the GPS coordinates that employees must be within to mark attendance"/>
-      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, padding: "26px 24px", maxWidth: 500 }}>
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#00d4ff", letterSpacing: 1, marginBottom: 14 }}>CURRENT OFFICE LOCATION</div>
-          <div style={{ display: "flex", gap: 8, background: "#070d1a", borderRadius: 9, padding: "12px 16px", fontFamily: "'DM Mono',monospace", fontSize: 13, color: "#4A90D9" }}>
-            <span>Lat: {store.officeLocation?.lat?.toFixed(6)}</span>
-            <span style={{ color: "#1e3a5f" }}>|</span>
-            <span>Lng: {store.officeLocation?.lng?.toFixed(6)}</span>
-            <span style={{ color: "#1e3a5f" }}>|</span>
-            <span>R: {store.officeRadius}m</span>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 18 }}>
-          <Field label="LATITUDE (-90 to 90)" value={latStr} onChange={e => setLatStr(e.target.value)} placeholder="e.g. 12.971600"/>
-          <Field label="LONGITUDE (-180 to 180)" value={lngStr} onChange={e => setLngStr(e.target.value)} placeholder="e.g. 77.594600"/>
-          <Field label="ALLOWED RADIUS (metres)" value={String(radius)} onChange={e => setRadius(e.target.value)} placeholder="200"/>
-        </div>
-
-        {locErr && <div style={{ background: "#1a0a0a", border: "1px solid #7f1d1d", borderRadius: 8, padding: "9px 13px", color: "#FCA5A5", fontSize: 12, marginBottom: 12 }}>{locErr}</div>}
-        {ok && <div style={{ background: "#021a0a", border: "1px solid #14532d", borderRadius: 8, padding: "9px 13px", color: "#4ADE80", fontSize: 12, marginBottom: 12 }}>{ok}</div>}
-
-        <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={useMyLocation} disabled={locLoading}
-            style={{ flex: 1, padding: "11px", background: "#0a1628", border: "1px solid #1e3a5f", borderRadius: 8, color: locLoading ? "#4A90D9" : "#00d4ff", cursor: locLoading ? "not-allowed" : "pointer", fontSize: 13, fontFamily: "inherit", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
-            {locLoading ? <span className="spin">⟳</span> : "⌖"}
-            {locLoading ? "Getting location..." : "Use My Location"}
-          </button>
-          <button onClick={save}
-            style={{ flex: 1, padding: "11px", background: "linear-gradient(135deg,#00d4ff,#0ea5e9)", border: "none", borderRadius: 8, color: "#050911", fontWeight: 700, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
-            Save Location
-          </button>
-        </div>
-        <div style={{ marginTop: 14, fontSize: 11, color: "#334155", lineHeight: 1.6 }}>
-          ⓘ "Use My Location" fills in your current GPS coordinates. Review them and click Save. You can also type coordinates manually.
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Messages Viewer ───────────────────────────────────────────────────────────
-function MsgViewer({ store, refresh }) {
-  function markRead(id) {
-    const s = loadStore();
-    const m = s.messages.find(x => x.id === id);
-    if (m) { m.read = true; saveStore(s); refresh(); }
-  }
-  function deleteMsg(id) {
-    const s = loadStore();
-    s.messages = s.messages.filter(x => x.id !== id);
-    saveStore(s); refresh();
-  }
-
-  return (
-    <div className="fu">
-      <Title text="Messages" sub={`${store.messages.filter(m => !m.read).length} unread`}/>
-      {store.messages.length === 0 && (
-        <div style={{ color: "#1e3a5f", textAlign: "center", padding: 40 }}>No messages yet.</div>
-      )}
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {[...store.messages].reverse().map(m => (
-          <div key={m.id} style={{ background: m.read ? "#0d1421" : "#070e1c", border: `1px solid ${m.read ? "#0f2040" : "#1e3a5f"}`, borderRadius: 12, padding: "16px 18px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>{m.from} <span style={{ color: "#64748B", fontWeight: 400, fontSize: 11 }}>({m.type})</span></div>
-              <div style={{ fontSize: 10, color: "#334155", fontFamily: "'DM Mono',monospace" }}>{m.time}</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#94A3B8", marginBottom: 12 }}>{m.text}</div>
-            <div style={{ display: "flex", gap: 8 }}>
-              {!m.read && (
-                <button onClick={() => markRead(m.id)} style={{ padding: "5px 12px", background: "#021a0a", border: "1px solid #14532d", borderRadius: 6, color: "#4ADE80", cursor: "pointer", fontSize: 11, fontFamily: "inherit" }}>
-                  Mark Read
-                </button>
-              )}
-              <button onClick={() => deleteMsg(m.id)} style={{ padding: "5px 12px", background: "#1a0505", border: "1px solid #7f1d1d", borderRadius: 6, color: "#FCA5A5", cursor: "pointer", fontSize: 11, fontFamily: "inherit" }}>
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Employee Dashboard ────────────────────────────────────────────────────────
-function EmpDash({ user, onLogout }) {
-  const [view, setView] = useState("att");
-  const [store, setStore] = useState(loadStore());
-  const refresh = () => setStore(loadStore());
-  const nav = [
-    { id: "att", icon: "◻", label: "Mark Attendance" },
-    { id: "records", icon: "◈", label: "My Records" },
-  ];
-  return (
-    <Shell user={user} onLogout={onLogout} nav={nav} active={view} setActive={v => { setView(v); refresh(); }}>
-      {view === "att" && <MarkAttendance user={user} store={store} refresh={refresh}/>}
-      {view === "records" && <MyRecords user={user} store={store}/>}
-    </Shell>
-  );
-}
-
-// ── Mark Attendance (fixed location logic) ────────────────────────────────────
-function MarkAttendance({ user, store, refresh }) {
-  const today = getTodayKey();
-  const existingRec = store.attendance[user.username]?.[today];
-
-  const [status, setStatus] = useState(null); // null | "checking" | "ok" | "far" | "error" | "done"
-  const [dist, setDist] = useState(null);
-  const [errMsg, setErrMsg] = useState("");
-  const [note, setNote] = useState("");
-
-  const office = store.officeLocation || DEFAULT_OFFICE;
-  const radius = store.officeRadius || DEFAULT_RADIUS;
-
-  async function checkLocation() {
-    setStatus("checking"); setDist(null); setErrMsg("");
-    try {
-      const pos = await getCurrentPosition();
-      const d = Math.round(getDistance(pos.lat, pos.lng, office.lat, office.lng));
-      setDist(d);
-      setStatus(d <= radius ? "ok" : "far");
-    } catch (e) {
-      setErrMsg(e.message);
-      setStatus("error");
-    }
-  }
-
-  function markPresent() {
-    const s = loadStore();
-    if (!s.attendance[user.username]) s.attendance[user.username] = {};
-    s.attendance[user.username][today] = {
-      status: "present",
-      time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
-      note: ""
-    };
-    saveStore(s); refresh(); setStatus("done");
-  }
-
-  function reportAbsence() {
-    const s = loadStore();
-    if (!s.attendance[user.username]) s.attendance[user.username] = {};
-    s.attendance[user.username][today] = {
-      status: "absent",
-      time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
-      note: note || "Self-reported absence"
-    };
-    if (!s.messages) s.messages = [];
-    s.messages.push({
-      id: Date.now(),
-      from: user.name,
-      type: "Absence Report",
-      text: note || "Reported absence for today.",
-      time: new Date().toLocaleString("en-IN"),
-      read: false
-    });
-    saveStore(s); refresh(); setStatus("done");
-  }
-
-  if (existingRec) {
-    return (
-      <div className="fu">
-        <Title text="Today's Attendance" sub={formatDate(today)}/>
-        <div style={{ background: existingRec.status === "present" ? "#021a0a" : "#1a0505", border: `1px solid ${existingRec.status === "present" ? "#14532d" : "#7f1d1d"}`, borderRadius: 14, padding: 28, maxWidth: 380 }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>{existingRec.status === "present" ? "✓" : "✗"}</div>
-          <div style={{ fontWeight: 700, fontSize: 16 }}>
-            {existingRec.status === "present" ? "Attendance Marked" : "Absence Reported"}
-          </div>
-          <div style={{ fontSize: 12, color: "#64748B", marginTop: 4, fontFamily: "'DM Mono',monospace" }}>{existingRec.time}</div>
-          {existingRec.note && <div style={{ marginTop: 10, fontSize: 13, color: "#94A3B8" }}>{existingRec.note}</div>}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="fu">
-      <Title text="Today's Attendance" sub={formatDate(today)}/>
-
-      {/* Initial state */}
-      {!status && (
-        <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 14, padding: 28, maxWidth: 380 }}>
-          <p style={{ color: "#94A3B8", fontSize: 13, marginBottom: 20, lineHeight: 1.7 }}>
-            To mark your attendance, we need to verify you are within <strong style={{ color: "#00d4ff" }}>{radius}m</strong> of the office.
-          </p>
-          <button onClick={checkLocation}
-            style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#00d4ff,#0ea5e9)", border: "none", borderRadius: 9, color: "#050911", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-            ⌖ Verify My Location
-          </button>
-        </div>
-      )}
-
-      {/* Checking */}
-      {status === "checking" && (
-        <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 14, padding: 36, maxWidth: 380, textAlign: "center" }}>
-          <div className="spin" style={{ fontSize: 30, marginBottom: 14 }}>⟳</div>
-          <div style={{ color: "#4A90D9", fontSize: 13 }}>Getting your GPS location…</div>
-          <div style={{ color: "#334155", fontSize: 11, marginTop: 6 }}>Please allow location access if prompted.</div>
-        </div>
-      )}
-
-      {/* Error */}
-      {status === "error" && (
-        <div style={{ background: "#1a0a0a", border: "1px solid #7f1d1d", borderRadius: 14, padding: 28, maxWidth: 380 }}>
-          <div style={{ fontSize: 26, marginBottom: 10 }}>⚠</div>
-          <div style={{ color: "#FCA5A5", fontSize: 13, marginBottom: 18, lineHeight: 1.6 }}>{errMsg}</div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={checkLocation}
-              style={{ flex: 1, padding: "10px", background: "#0a1628", border: "1px solid #1e3a5f", borderRadius: 8, color: "#00d4ff", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-              Try Again
-            </button>
-            <button onClick={() => setStatus("report")}
-              style={{ flex: 1, padding: "10px", background: "#1a0505", border: "1px solid #7f1d1d", borderRadius: 8, color: "#FCA5A5", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-              Report Absence
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Within radius */}
-      {status === "ok" && (
-        <div style={{ background: "#021a0a", border: "1px solid #14532d", borderRadius: 14, padding: 28, maxWidth: 380 }}>
-          <div style={{ fontSize: 26, marginBottom: 8 }}>✓</div>
-          <div style={{ color: "#4ADE80", fontWeight: 700, fontSize: 15, marginBottom: 4 }}>You're at the office!</div>
-          <div style={{ color: "#64748B", fontSize: 12, fontFamily: "'DM Mono',monospace", marginBottom: 20 }}>
-            Distance: {dist}m | Allowed: {radius}m
-          </div>
-          <button onClick={markPresent}
-            style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#4ADE80,#22c55e)", border: "none", borderRadius: 9, color: "#050911", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-            ✓ Mark Present
-          </button>
-        </div>
-      )}
-
-      {/* Too far */}
-      {status === "far" && (
-        <div style={{ background: "#1a0a0a", border: "1px solid #7f1d1d", borderRadius: 14, padding: 28, maxWidth: 380 }}>
-          <div style={{ fontSize: 26, marginBottom: 8 }}>⚠</div>
-          <div style={{ color: "#FCA5A5", fontWeight: 700, marginBottom: 4 }}>You are {dist}m from the office.</div>
-          <div style={{ color: "#64748B", fontSize: 12, marginBottom: 20 }}>Allowed: {radius}m</div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={checkLocation}
-              style={{ flex: 1, padding: "10px", background: "#0a1628", border: "1px solid #1e3a5f", borderRadius: 8, color: "#00d4ff", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-              Try Again
-            </button>
-            <button onClick={() => setStatus("report")}
-              style={{ flex: 1, padding: "10px", background: "#1a0505", border: "1px solid #7f1d1d", borderRadius: 8, color: "#FCA5A5", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-              Report Absence
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Report absence */}
-      {status === "report" && (
-        <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 14, padding: 28, maxWidth: 380 }}>
-          <div style={{ fontWeight: 700, marginBottom: 14 }}>Report Absence</div>
-          <Field label="REASON (OPTIONAL)" value={note} onChange={e => setNote(e.target.value)} placeholder="Sick leave, personal, etc."/>
-          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-            <button onClick={() => setStatus(null)} style={{ flex: 1, padding: "10px", border: "1px solid #1e3a5f", borderRadius: 8, background: "transparent", color: "#94A3B8", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-            <button onClick={reportAbsence} style={{ flex: 1, padding: "10px", background: "#7f1d1d", border: "none", borderRadius: 8, color: "#FCA5A5", cursor: "pointer", fontFamily: "inherit", fontWeight: 700 }}>Submit</button>
-          </div>
-        </div>
-      )}
-
-      {/* Done */}
-      {status === "done" && (
-        <div style={{ background: "#021a0a", border: "1px solid #14532d", borderRadius: 14, padding: 28, maxWidth: 380, textAlign: "center" }}>
-          <div style={{ fontSize: 32, marginBottom: 10 }}>✓</div>
-          <div style={{ color: "#4ADE80", fontWeight: 700 }}>Submitted successfully!</div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── My Records ────────────────────────────────────────────────────────────────
-function MyRecords({ user, store }) {
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
-  const days = getMonthDays(year, month);
-  const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
-
-  let presCount = 0, absCount = 0;
-  for (let d = 1; d <= days; d++) {
-    const key = `${monthStr}-${String(d).padStart(2, "0")}`;
-    const st = store.attendance[user.username]?.[key]?.status;
-    if (st === "present") presCount++;
-    else if (st === "absent") absCount++;
-  }
-
-  return (
-    <div className="fu">
-      <Title text="My Records"/>
-      <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
-        <select value={month} onChange={e => setMonth(+e.target.value)} style={sel}>
-          {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
-            <option key={i} value={i}>{m}</option>
-          ))}
-        </select>
-        <select value={year} onChange={e => setYear(+e.target.value)} style={sel}>
-          {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-      </div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-        <div style={{ background: "#021a0a", border: "1px solid #14532d", borderRadius: 9, padding: "10px 18px" }}>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "#4ADE80", fontFamily: "'DM Mono',monospace" }}>{presCount}</div>
-          <div style={{ fontSize: 10, color: "#64748B" }}>Present</div>
-        </div>
-        <div style={{ background: "#1a0505", border: "1px solid #7f1d1d", borderRadius: 9, padding: "10px 18px" }}>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "#FCA5A5", fontFamily: "'DM Mono',monospace" }}>{absCount}</div>
-          <div style={{ fontSize: 10, color: "#64748B" }}>Absent</div>
-        </div>
-      </div>
-      <div style={{ background: "#0d1421", border: "1px solid #0f2040", borderRadius: 13, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #0f2040" }}>
-            {["Date","Day","Status","Time","Note"].map(h => (
-              <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: 10, color: "#4A90D9", letterSpacing: 1, fontFamily: "'DM Mono',monospace" }}>{h}</th>
-            ))}
-          </tr></thead>
-          <tbody>
-            {Array.from({ length: days }, (_, i) => {
-              const d = i + 1;
-              const key = `${monthStr}-${String(d).padStart(2, "0")}`;
-              const rec = store.attendance[user.username]?.[key];
-              const dayName = new Date(year, month, d).toLocaleDateString("en-IN", { weekday: "short" });
-              return (
-                <tr key={d} style={{ borderBottom: i < days - 1 ? "1px solid #070e1c" : "none" }}>
-                  <td style={{ padding: "10px 16px", fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{key}</td>
-                  <td style={{ padding: "10px 16px", color: "#64748B", fontSize: 12 }}>{dayName}</td>
-                  <td style={{ padding: "10px 16px" }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99, background: rec?.status === "present" ? "#04290d" : rec?.status === "absent" ? "#1a0505" : "#0a1628", color: rec?.status === "present" ? "#4ADE80" : rec?.status === "absent" ? "#FCA5A5" : "#334155", fontFamily: "'DM Mono',monospace" }}>
-                      {(rec?.status || "—").toUpperCase()}
-                    </span>
-                  </td>
-                  <td style={{ padding: "10px 16px", color: "#64748B", fontSize: 11, fontFamily: "'DM Mono',monospace" }}>{rec?.time || "—"}</td>
-                  <td style={{ padding: "10px 16px", color: "#64748B", fontSize: 11 }}>{rec?.note || ""}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ── App root ──────────────────────────────────────────────────────────────────
-function App() {
-  const [user, setUser] = useState(null);
-
-  function onLogin(u) { setUser(u); }
-  function onLogout() { setUser(null); }
-
-  if (!user) return <Login onLogin={onLogin}/>;
-  if (user.role === "admin") return <AdminDash user={user} onLogout={onLogout}/>;
-  return <EmpDash user={user} onLogout={onLogout}/>;
-}
-
-ReactDOM.render(<App/>, document.getElementById("root"));
-</script>
-</body>
-</html>
+// EYE TOGGLE — fixed
+document.getElementById("eye-btn").addEventListener("click", function() {
+  eyeOpen = !eyeOpen;
+  document.getElementById("l-pass").type = eyeOpen ? "text" : "password";
+  document.getElementById("eye-open").style.display  = eyeOpen ? "none"   : "inline";
+  document.getElementById("eye-closed").style.disp
